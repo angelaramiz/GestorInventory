@@ -125,7 +125,7 @@ function mostrarMensaje(mensaje, tipo) {
         title: tipo.charAt(0).toUpperCase() + tipo.slice(1),
         text: mensaje,
         icon: iconType,
-        timer: 1000,
+        timer: 1500,
         showConfirmButton: false 
     });
 }
