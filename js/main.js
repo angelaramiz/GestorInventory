@@ -246,7 +246,7 @@ function cargarCSV(event) {
         const headers = lines[0].split(',');
 
         // Check if the CSV structure is correct
-        if (headers.length !== 5 || 
+        if (headers.length !== 4 || 
             !headers.includes('Código') || 
             !headers.includes('Nombre') || 
             !headers.includes('Categoría') || 
