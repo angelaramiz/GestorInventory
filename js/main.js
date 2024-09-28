@@ -45,31 +45,28 @@ function mostrarSeccion(seccion) {
 
 
 // Funciones para agregar producto
-function agregarProducto(evento) {
+async function agregarProducto(evento) {
     evento.preventDefault();
 
-    const codigo = document.getElementById('codigo').value;
-    const nombre = document.getElementById('nombre').value;
-    const categoria = document.getElementById('categoria').value;
-    const marca = document.getElementById('marca').value;
-
-    const producto = { codigo, nombre, categoria, marca };
-
-    const transaction = db.transaction(["productos"], "readwrite");
-    const objectStore = transaction.objectStore("productos");
-
-    const request = objectStore.add(producto);
-
-    request.onerror = (event) => {
-        console.error("Error al agregar producto", event.target.error);
-        mostrarMensaje("Error al agregar el producto. Es posible que el código ya exista.", "error");
+    const producto = {
+        codigo: document.getElementById('codigo').value,
+        nombre: document.getElementById('nombre').value,
+        categoria: document.getElementById('categoria').value,
+        marca: document.getElementById('marca').value
     };
 
-    request.onsuccess = (event) => {
-        console.log("Producto agregado exitosamente");
-        mostrarMensaje("Producto agregado exitosamente", "exito");
+    try {
+        const transaction = db.transaction(["productos"], "readwrite");
+        const objectStore = transaction.objectStore("productos");
+        await objectStore.add(producto);
+        
+        mostrarMensaje("Producto agregado exitosamente", "success");
         document.getElementById('formAgregarProducto').reset();
-    };
+        cargarDatosEnTabla(); // Refrescar la tabla después de agregar producto
+    } catch (error) {
+        console.error("Error al agregar producto", error);
+        mostrarMensaje("Error al agregar el producto. Es posible que el código ya exista.", "error");
+    }
 }
 
 // Funciones para consulta de producto
@@ -119,14 +116,14 @@ function mostrarResultados(resultados) {
 }
 
 function mostrarMensaje(mensaje, tipo) {
-    // Mapear "exito" a "success" para SweetAlert2
-    const iconType = tipo === 'exito' ? 'success' : tipo;
     Swal.fire({
-        title: tipo.charAt(0).toUpperCase() + tipo.slice(1),
+        title: tipo === 'success' ? '¡Éxito!' : 'Error',
         text: mensaje,
-        icon: iconType,
-        timer: 1500,
-        showConfirmButton: false 
+        icon: tipo,
+        timer: 2000,
+        showConfirmButton: false,
+        background: tipo === 'success' ? '#e0f7fa' : '#ffebee',
+        iconColor: tipo === 'success' ? '#00796b' : '#c62828'
     });
 }
 
@@ -614,24 +611,35 @@ function iniciarEscaneo(inputId) {
             type: "LiveStream",
             target: document.querySelector('#scanner-container'),
             constraints: {
-                width: 480,
-                height: 320,
+                width: 640,
+                height: 480,
                 facingMode: "environment"
             },
         },
         decoder: {
-            readers: ["ean_reader", "ean_8_reader", "code_128_reader"]
+            readers: ["ean_reader", "ean_8_reader", "code_128_reader"],
+            debug: {
+                drawBoundingBox: true,
+                showFrequency: true,
+                drawScanline: true,
+                showPattern: true
+            }
+        },
+        locate: true,
+        locator: {
+            patchSize: "medium",
+            halfSample: true,
+            area: {
+                top: "30%",
+                right: "70%",
+                left: "30%",
+                bottom: "70%"
+            }
         }
     }, function(err) {
         if (err) {
             console.error("Error al iniciar Quagga:", err);
-            Swal.fire({
-                title: 'Error',
-                text: "Error al iniciar el escáner. Por favor, asegúrese de que su dispositivo tiene una cámara y ha dado los permisos necesarios.",
-                icon: 'error',
-                timer:1000,
-                showConfirmButton: false 
-            });
+            mostrarMensaje("Error al iniciar el escáner. Verifique la cámara y los permisos.", "error");
             return;
         }
         console.log("Escáner inicializado correctamente");
@@ -643,36 +651,42 @@ function iniciarEscaneo(inputId) {
         const code = result.codeResult.code;
         document.getElementById(inputId).value = code;
         toggleEscaner(inputId);
-        Swal.fire({
-            title: 'Éxito',
-            text: "Código de barras detectado: " + code,
-            icon: 'success',
-            timer:1000,
-            showConfirmButton: false 
-        });
-        // Aquí puedes añadir lógica adicional según la página en la que estés
-        if (inputId === 'codigoConsulta') {
-            buscarProducto();
-        } else if (inputId === 'codigoEditar') {
-            buscarProductoParaEditar();
-        } else if (inputId === 'codigoInventario') {
-            buscarProductoInventario();
-        }
+        mostrarMensaje(`Código de barras detectado: ${code}`, "success");
+        realizarAccionSegunPagina(inputId);
     });
 }
 
-// Función para cargar datos en la tabla de la página de archivos
-function cargarDatosEnTabla() {
-    if (!document.getElementById('databaseBody')) return; // Salir si no estamos en la página de archivos
-    
-    const transaction = db.transaction(["productos"], "readonly");
-    const objectStore = transaction.objectStore("productos");
-    const request = objectStore.getAll();
+function realizarAccionSegunPagina(inputId) {
+    if (inputId === 'codigo') {
+        // Estamos en la página de agregar producto
+        document.getElementById('nombre').focus();
+    } else if (inputId === 'codigoConsulta') {
+        buscarProducto();
+    } else if (inputId === 'codigoEditar') {
+        buscarProductoParaEditar();
+    } else if (inputId === 'codigoInventario') {
+        buscarProductoInventario();
+    }
+}
 
-    request.onsuccess = function(event) {
-        const productos = event.target.result;
+function toggleFlash(turnOn) {
+    const track = Quagga.CameraAccess.getActiveTrack();
+    if (track && track.getCapabilities().torch) {
+        track.applyConstraints({
+            advanced: [{ torch: turnOn }]
+        });
+    } else {
+        console.log("El flash no es compatible en este dispositivo.");
+    }
+}
+// Función para cargar datos en la tabla de la página de archivos
+async function cargarDatosEnTabla() {
+    if (!document.getElementById('databaseBody')) return;
+    
+    try {
+        const productos = await obtenerProductos();
         const tbody = document.getElementById("databaseBody");
-        tbody.innerHTML = ""; // Limpiar la tabla antes de cargar nuevos datos
+        tbody.innerHTML = "";
 
         productos.forEach(function(producto) {
             const row = tbody.insertRow();
@@ -681,14 +695,22 @@ function cargarDatosEnTabla() {
             row.insertCell().textContent = producto.categoria;
             row.insertCell().textContent = producto.marca;
         });
-    };
-
-    request.onerror = function(event) {
-        console.error("Error al cargar datos en la tabla:", event.target.error);
+    } catch (error) {
+        console.error("Error al cargar datos en la tabla:", error);
         mostrarMensaje("Error al cargar los datos de la base de datos", "error");
-    };
+    }
 }
 
+function obtenerProductos() {
+    return new Promise((resolve, reject) => {
+        const transaction = db.transaction(["productos"], "readonly");
+        const objectStore = transaction.objectStore("productos");
+        const request = objectStore.getAll();
+
+        request.onsuccess = (event) => resolve(event.target.result);
+        request.onerror = (error) => reject(error);
+    });
+}
 //  Función para cargar  datos en la tabla de la página de archivos 
 function cargarDatosInventarioEnTablaPlantilla() {
     const transaction = dbInventario.transaction(["inventario"], "readonly");
@@ -777,6 +799,19 @@ async function init() {
             inputCSV.addEventListener('change', cargarCSV);
         }
 
+        const formAgregar = document.getElementById('formAgregarProducto');
+        if (formAgregar) {
+            formAgregar.addEventListener('submit', agregarProducto);
+        }
+
+        const botonesEscanear = document.querySelectorAll('[id^="escanearBtn"]');
+        botonesEscanear.forEach(boton => {
+            boton.addEventListener('click', function() {
+                const inputId = this.previousElementSibling.id;
+                toggleEscaner(inputId);
+            });
+        });
+
         const botonDescargarCSV = document.getElementById('descargarCSV');
         if (botonDescargarCSV) {
             botonDescargarCSV.addEventListener('click', descargarCSV);
@@ -788,13 +823,17 @@ async function init() {
             cargarDatosInventarioEnTablaPlantilla(); // Nueva llamada
         }
         const botonResetearBaseDatos = document.getElementById('resetearBaseDatos');
-if (botonResetearBaseDatos) {
-    botonResetearBaseDatos.addEventListener('click', resetearBaseDatos);
-}
+        if (botonResetearBaseDatos) {
+            botonResetearBaseDatos.addEventListener('click', resetearBaseDatos);
+        }
 
         const botonGenerarHojaInventario = document.getElementById('generarHojaInventario');
         if (botonGenerarHojaInventario) {
             botonGenerarHojaInventario.addEventListener('click', generarHojaInventario);
+        }
+        if (document.getElementById('archivos')) {
+            await cargarDatosEnTabla();
+            await cargarDatosInventarioEnTablaPlantilla();
         }
     } catch (error) {
         console.error("Error initializing the application:", error);
@@ -848,3 +887,5 @@ const botonGenerarPlantilla = document.getElementById('generarPlantilla');
 if (botonGenerarPlantilla) {
     botonGenerarPlantilla.addEventListener('click', generarPlantillaInventario);
 }
+// Llamar a la función de inicialización cuando se carga la página
+document.addEventListener('DOMContentLoaded', init);
