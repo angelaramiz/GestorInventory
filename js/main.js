@@ -2,7 +2,9 @@
 let db;
 let escanerActivo = false;
 let dbInventario;
-
+let currentCameraIndex = 0;
+let rearCameras = []; // Array para almacenar las cámaras traseras
+let currentCameraId = null;
 // Nombre y versión de la base de datos
 const dbName = 'ProductosDB';
 const dbVersion = 1;
@@ -115,15 +117,14 @@ function mostrarResultados(resultados) {
     }
 }
 
+// Función para mostrar mensajes de éxito o error
 function mostrarMensaje(mensaje, tipo) {
     Swal.fire({
         title: tipo === 'success' ? '¡Éxito!' : 'Error',
         text: mensaje,
         icon: tipo,
         timer: 2000,
-        showConfirmButton: false,
-        background: tipo === 'success' ? '#e0f7fa' : '#ffebee',
-        iconColor: tipo === 'success' ? '#00796b' : '#c62828'
+        showConfirmButton: false
     });
 }
 
@@ -592,18 +593,18 @@ function descargarCSV() {
 }
 
 // Funciones para el escáner de códigos de barras
+// Función para mostrar/ocultar el escáner
 function toggleEscaner(inputId) {
     const scannerContainer = document.getElementById('scanner-container');
     if (escanerActivo) {
-        Quagga.stop();
-        scannerContainer.style.display = 'none';
-        escanerActivo = false;
+        detenerEscaneo();
     } else {
         scannerContainer.style.display = 'block';
         iniciarEscaneo(inputId);
     }
 }
 
+// Función para iniciar el escaneo
 function iniciarEscaneo(inputId) {
     Quagga.init({
         inputStream: {
@@ -613,50 +614,78 @@ function iniciarEscaneo(inputId) {
             constraints: {
                 width: 640,
                 height: 480,
-                facingMode: "environment"
-            },
-            area: { // Define if you want to scan only a portion of the image
-                top: "30%",
-                right: "30%",
-                left: "30%",
-                bottom: "30%",
-            },
+                deviceId: currentCameraId ? { exact: currentCameraId } : undefined
+            }
         },
         decoder: {
             readers: ["ean_reader", "ean_8_reader", "code_128_reader"],
-            debug: {
-                drawBoundingBox: true,
-                showFrequency: true,
-                drawScanline: true,
-                showPattern: true
-            }
         },
         locate: true,
         locator: {
             patchSize: "medium",
-            halfSample: true
-        },
-        willReadFrequently: true // Add this line
+            halfSample: true,
+            area: { 
+                top: "40%",   // Centrar en la línea roja
+                right: "90%", 
+                left: "10%",  
+                bottom: "60%"
+            }
+        }
     }, function(err) {
         if (err) {
             console.error("Error al iniciar Quagga:", err);
-            mostrarMensaje("Error al iniciar el escáner. Verifique la cámara y los permisos.", "error");
             return;
         }
-        console.log("Escáner inicializado correctamente");
         Quagga.start();
         escanerActivo = true;
+        mostrarControles(); // Mostrar controles de escáner
     });
 
     Quagga.onDetected(function(result) {
         const code = result.codeResult.code;
-        document.getElementById(inputId).value = code;
-        toggleEscaner(inputId);
-        mostrarMensaje(`Código de barras detectado: ${code}`, "success");
-        realizarAccionSegunPagina(inputId);
+
+        if (code.length >= 8) {
+            document.getElementById(inputId).value = code;
+            Quagga.stop();
+            escanerActivo = false;
+            ocultarControles();
+        }
     });
 }
+// Función para cambiar de cámara según la selección del usuario
+function cambiarCamaraSeleccionada() {
+    const cameraSelect = document.getElementById('cameraSelect');
+    currentCameraId = cameraSelect.value;
+    if (escanerActivo) {
+        Quagga.stop();
+        iniciarEscaneo('codigo');
+    }
+}
 
+// Función para inicializar las cámaras traseras disponibles
+async function inicializarCamaras() {
+    try {
+        const devices = await navigator.mediaDevices.enumerateDevices();
+        availableCameras = devices.filter(device => device.kind === 'videoinput');
+        
+        const cameraSelect = document.getElementById('cameraSelect');
+        cameraSelect.innerHTML = ''; // Limpiar las opciones existentes
+
+        availableCameras.forEach((camera, index) => {
+            const option = document.createElement('option');
+            option.value = camera.deviceId;
+            option.text = camera.label || `Cámara ${index + 1}`;
+            cameraSelect.appendChild(option);
+        });
+
+        // Asignar la primera cámara como predeterminada
+        if (availableCameras.length > 0) {
+            currentCameraId = availableCameras[0].deviceId;
+        }
+    } catch (error) {
+        console.error('Error al obtener las cámaras:', error);
+    }
+}
 function realizarAccionSegunPagina(inputId) {
     if (inputId === 'codigo') {
         // Estamos en la página de agregar producto
@@ -702,6 +731,23 @@ async function cargarDatosEnTabla() {
     }
 }
 
+// Mostrar los botones de control cuando el escáner está activo
+function mostrarControles() {
+    document.getElementById("botonesControl").style.display = "block";
+}
+
+// Ocultar los botones de control cuando se detiene el escáner
+function ocultarControles() {
+    document.getElementById("botonesControl").style.display = "none";
+}
+
+// Función para detener el escaneo
+function detenerEscaneo() {
+    Quagga.stop();
+    escanerActivo = false;
+    document.getElementById('scanner-container').style.display = 'none';
+    ocultarControles();
+}
 function obtenerProductos() {
     return new Promise((resolve, reject) => {
         const transaction = db.transaction(["productos"], "readonly");
@@ -830,6 +876,41 @@ async function init() {
     }
 }
 
+// Inicializar cámaras traseras al cargar la página
+// Inicializar la lista de cámaras al cargar la página
+document.addEventListener('DOMContentLoaded', () => {
+    inicializarCamaras();
+    document.getElementById('cameraSelect').addEventListener('change', cambiarCamaraSeleccionada);
+    document.getElementById("escanearBtn").addEventListener("click", () => iniciarEscaneo('codigo'));
+    document.getElementById("stopButton").addEventListener("click", () => Quagga.stop());
+    document.getElementById("flashOnButton").addEventListener("click", () => toggleFlash(true));
+    document.getElementById("flashOffButton").addEventListener("click", () => toggleFlash(false));
+});
+
+// Configuración de la línea roja de escaneo
+document.querySelector('#scanner-container').innerHTML += `
+    <div class="scan-line"></div>
+`;
+
+const scanLineStyle = document.createElement('style');
+scanLineStyle.innerHTML = `
+    .scan-line {
+        position: absolute;
+        top: 50%;
+        left: 0;
+        width: 100%;
+        height: 2px;
+        background-color: red;
+        opacity: 0.8;
+        z-index: 10;
+        animation: blink 1s infinite;
+    }
+    @keyframes blink {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.5; }
+    }
+`;
+document.head.appendChild(scanLineStyle);
 // Llamar a la función de inicialización cuando se carga la página
 document.addEventListener('DOMContentLoaded', () => {
     init().catch(error => {
