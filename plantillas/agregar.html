@@ -3,63 +3,107 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Agregar Nuevo Producto - Sistema de Gestión de Productos</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/quagga/0.12.1/quagga.min.js"></script>
+    <title>Agregar Nuevo Producto</title>
+    <script src="https://cdn.jsdelivr.net/npm/quagga@0.12.1/dist/quagga.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <style>
+        #scanner-container {
+            position: relative;
+            width: 100%;
+            height: 300px;
+            border: 2px solid #000;
+            background-color: #f3f3f3;
+        }
+        .scan-line {
+            position: absolute;
+            top: 50%;
+            left: 0;
+            width: 100%;
+            height: 4px; /* Aumenta el grosor */
+            background-color: red;
+            animation: blink 1s infinite; /* Animación de parpadeo */
+        }
+        @media (max-width: 768px) {
+            #scanner-container {
+                height: 250px;
+            }
+            .scan-line {
+                height: 1px;
+            }
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        .scan-line {
+            position: absolute;
+            top: 50%;
+            left: 0;
+            width: 100%;
+            height: 4px; /* Aumenta el grosor */
+            background-color: red;
+            animation: blink 1s infinite; /* Animación de parpadeo */
+        }
+    </style>
 </head>
 <body class="bg-gray-100">
     <div class="container mx-auto mt-8 p-4">
-        <h1 class="text-3xl font-bold mb-6">Agregar Nuevo Producto</h1>
+        <h1 id="agregar-nuevo-producto" class="text-3xl font-bold mb-6">Agregar Nuevo Producto</h1>
         
         <a href="../index.html" class="text-blue-500 hover:underline mb-4 inline-block">← Regresar</a>
-
+        
         <form id="formAgregarProducto" class="bg-white shadow-md rounded px-8 pt-6 pb-8 mb-4">
             <div class="mb-4">
                 <label class="block text-gray-700 text-sm font-bold mb-2" for="codigo">
                     Código/PLU:
                 </label>
                 <div class="flex">
-                    <input class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" id="codigo" type="text" required>
-                    <button type="button" id="escanearBtnAgregar" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded ml-2">
+                    <input class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" id="codigo" type="text" placeholder="Código/PLU">
+                    <button type="button" id="escanearBtn" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline ml-2">
                         Escanear Código
                     </button>
                 </div>
             </div>
+            
             <div class="mb-4">
                 <label class="block text-gray-700 text-sm font-bold mb-2" for="nombre">
                     Nombre:
                 </label>
-                <input class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" id="nombre" type="text" required>
+                <input class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" id="nombre" type="text" placeholder="Nombre del producto">
             </div>
+            
             <div class="mb-4">
                 <label class="block text-gray-700 text-sm font-bold mb-2" for="categoria">
                     Categoría:
                 </label>
-                <input class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" id="categoria" type="text" required>
+                <input class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" id="categoria" type="text" placeholder="Categoría del producto">
             </div>
+            
             <div class="mb-4">
                 <label class="block text-gray-700 text-sm font-bold mb-2" for="marca">
                     Marca/Proveedor:
                 </label>
-                <input class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" id="marca" type="text" required>
+                <input class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" id="marca" type="text" placeholder="Marca o proveedor">
             </div>
+            
             <div class="flex items-center justify-between">
                 <button class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline" type="submit">
                     Agregar Producto
                 </button>
             </div>
         </form>
-
+        
         <div id="mensaje" class="mt-4"></div>
-
+        
         <div id="scanner-container" class="mt-4" style="display: none;">
-            <button id="cerrarEscaner" class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded">
+            <div class="scan-line"></div>
+            <button id="cerrarEscaner" class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline mt-4">
                 Cerrar Escáner
             </button>
         </div>
     </div>
-
     <script src="../js/main.js"></script>
 </body>
 </html>
