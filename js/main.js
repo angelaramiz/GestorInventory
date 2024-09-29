@@ -615,6 +615,12 @@ function iniciarEscaneo(inputId) {
                 height: 480,
                 facingMode: "environment"
             },
+            area: { // Define if you want to scan only a portion of the image
+                top: "30%",
+                right: "30%",
+                left: "30%",
+                bottom: "30%",
+            },
         },
         decoder: {
             readers: ["ean_reader", "ean_8_reader", "code_128_reader"],
@@ -628,14 +634,9 @@ function iniciarEscaneo(inputId) {
         locate: true,
         locator: {
             patchSize: "medium",
-            halfSample: true,
-            area: {
-                top: "30%",
-                right: "70%",
-                left: "30%",
-                bottom: "70%"
-            }
-        }
+            halfSample: true
+        },
+        willReadFrequently: true // Add this line
     }, function(err) {
         if (err) {
             console.error("Error al iniciar Quagga:", err);
@@ -745,20 +746,8 @@ async function init() {
     try {
         await inicializarDB();
         await inicializarDBInventario();
-        // Event listeners para los formularios
-        const formAgregar = document.getElementById('formAgregarProducto');
-        if (formAgregar) {
-            formAgregar.addEventListener('submit', agregarProducto);
-        }
 
         // Event listeners para los botones de escaneo
-        const botonesEscanear = document.querySelectorAll('[id^="escanearBtn"]');
-        botonesEscanear.forEach(boton => {
-            boton.addEventListener('click', function() {
-                const inputId = this.previousElementSibling.id;
-                toggleEscaner(inputId);
-            });
-        });
 
         // Event listeners para los botones de búsqueda
         const botonBuscarConsulta = document.getElementById('buscarConsulta');
