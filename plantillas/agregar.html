@@ -3,91 +3,47 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Agregar Nuevo Producto</title>
-    <script src="https://cdn.jsdelivr.net/npm/quagga@0.12.1/dist/quagga.min.js"></script>
+    <title>Agregar Nuevo Producto - Sistema de Gestión de Productos</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/quagga/0.12.1/quagga.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-    <style>
-        #scanner-container {
-            position: relative;
-            width: 100%;
-            height: 300px;
-            border: 2px solid #000;
-            background-color: #f3f3f3;
-            margin-bottom: 20px; /* Añadir espacio debajo del escáner */
-        }
-        .scan-line {
-            position: absolute;
-            top: 50%;
-            left: 0;
-            width: 100%;
-            height: 4px;
-            background-color: red;
-            animation: blink 1s infinite;
-        }
-        @media (max-width: 768px) {
-            #scanner-container {
-                height: 250px;
-            }
-            .scan-line {
-                height: 2px;
-            }
-        }
-        @keyframes blink {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.5; }
-        }
-        #botonesControl {
-            display: none; /* Oculto por defecto */
-            margin-top: 20px; /* Separación de los botones de control */
-        }
-    </style>
 </head>
 <body class="bg-gray-100">
     <div class="container mx-auto mt-8 p-4">
         <h1 class="text-3xl font-bold mb-6">Agregar Nuevo Producto</h1>
         
+        <a href="../index.html" class="text-blue-500 hover:underline mb-4 inline-block">← Regresar</a>
+
         <form id="formAgregarProducto" class="bg-white shadow-md rounded px-8 pt-6 pb-8 mb-4">
             <div class="mb-4">
                 <label class="block text-gray-700 text-sm font-bold mb-2" for="codigo">
                     Código/PLU:
                 </label>
                 <div class="flex">
-                    <input class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" id="codigo" type="text" placeholder="Código/PLU">
-                    <button type="button" id="escanearBtn" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline ml-2">
+                    <input class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" id="codigo" type="text" required>
+                    <button type="button" id="escanearBtnAgregar" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded ml-2">
                         Escanear Código
                     </button>
                 </div>
             </div>
-            
             <div class="mb-4">
                 <label class="block text-gray-700 text-sm font-bold mb-2" for="nombre">
-                    Nombre del Producto:
+                    Nombre:
                 </label>
-                <input class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" id="nombre" type="text" placeholder="Nombre del producto">
+                <input class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" id="nombre" type="text" required>
             </div>
-            
             <div class="mb-4">
                 <label class="block text-gray-700 text-sm font-bold mb-2" for="categoria">
                     Categoría:
                 </label>
-                <input class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" id="categoria" type="text" placeholder="Categoría del producto">
+                <input class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" id="categoria" type="text" required>
             </div>
-            
             <div class="mb-4">
                 <label class="block text-gray-700 text-sm font-bold mb-2" for="marca">
                     Marca/Proveedor:
                 </label>
-                <input class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" id="marca" type="text" placeholder="Marca o proveedor">
+                <input class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" id="marca" type="text" required>
             </div>
-
-            <div class="mb-4">
-                <label class="block text-gray-700 text-sm font-bold mb-2" for="precio">
-                    Precio:
-                </label>
-                <input class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" id="precio" type="number" step="0.01" placeholder="Precio del producto">
-            </div>
-
             <div class="flex items-center justify-between">
                 <button class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline" type="submit">
                     Agregar Producto
@@ -95,25 +51,13 @@
             </div>
         </form>
 
-        <!-- Selección de Cámara -->
-        <div class="mt-4">
-            <label for="cameraSelect" class="block text-gray-700 text-sm font-bold mb-2">Seleccionar Cámara:</label>
-            <select id="cameraSelect" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
-                <!-- Opciones de cámara se agregarán dinámicamente -->
-            </select>
-        </div>
-        <div id="botonesControl" class="mt-4">
-            <button id="stopButton" class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded">Detener Escaneo</button>
-            <button id="toggleCameraButton" class="bg-yellow-500 hover:bg-yellow-700 text-white font-bold py-2 px-4 rounded">Cambiar Cámara</button>
-            <button id="flashOnButton" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">Activar Flash</button>
-            <button id="flashOffButton" class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded">Desactivar Flash</button>
-        </div>
-        <div id="scanner-container" class="mt-4" style="display: none;">
-            <div class="scan-line"></div>
-        </div>
+        <div id="mensaje" class="mt-4"></div>
 
-        <!-- Contenedor para los botones de control -->
-        
+        <div id="scanner-container" class="mt-4" style="display: none;">
+            <button id="cerrarEscaner" class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded">
+                Cerrar Escáner
+            </button>
+        </div>
     </div>
 
     <script src="../js/main.js"></script>
