@@ -1,6 +1,5 @@
 // Importaciones
-import { inicializarDB, inicializarDBInventario, cargarCSV, descargarCSV, cargarDatosEnTabla, cargarDatosInventarioEnTablaPlantilla, resetearBaseDeDatos, generarPlantillaInventario } from './db-operations.js';
-import { db, dbInventario } from './db-operations.js';
+import { db, dbInventario ,inicializarDB, inicializarDBInventario, cargarCSV, descargarCSV, cargarDatosEnTabla, cargarDatosInventarioEnTablaPlantilla, resetearBaseDeDatos, generarPlantillaInventario } from './db-operations.js';
 import { mostrarMensaje } from './logs.js';
 import { agregarProducto, buscarProducto, buscarProductoParaEditar, guardarCambios, eliminarProducto, buscarProductoInventario, guardarInventario } from './product-operations.js';
 import { toggleEscaner } from './scanner.js';
