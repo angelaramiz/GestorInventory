@@ -90,11 +90,6 @@ async function init() {
                 generarHojaInventario
             );
         }
-        document.head.appendChild(style);
-        const scannerContainer = document.getElementById("scanner-container");
-        if (scannerContainer) {
-            scannerContainer.appendChild(scannerOverlay);
-        }
         // Event listener para el botón de cerrar escáner
         const cerrarEscanerBtn = document.getElementById('cerrarEscaner');
         if (cerrarEscanerBtn) {
