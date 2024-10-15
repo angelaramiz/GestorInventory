@@ -1,8 +1,8 @@
 // Importaciones
-import { db, dbInventario ,inicializarDB, inicializarDBInventario, cargarCSV, descargarCSV, cargarDatosEnTabla, cargarDatosInventarioEnTablaPlantilla, resetearBaseDeDatos, generarPlantillaInventario, descargarInventarioPDF, descargarInventarioCSV } from './db-operations.js';
+import { db, dbInventario, inicializarDB, inicializarDBInventario, cargarCSV, descargarCSV, cargarDatosEnTabla, cargarDatosInventarioEnTablaPlantilla, resetearBaseDeDatos, generarPlantillaInventario, descargarInventarioPDF, descargarInventarioCSV } from './db-operations.js';
 import { mostrarMensaje } from './logs.js';
-import { agregarProducto, buscarProducto, buscarProductoParaEditar, guardarCambios, eliminarProducto, buscarProductoInventario, guardarInventario } from './product-operations.js';
-import { toggleEscaner } from './scanner.js';
+import {agregarProducto, buscarProducto, buscarProductoParaEditar,buscarProductoInventario,guardarCambios,eliminarProducto,guardarInventario,} from './product-operations.js';
+import { toggleEscaner, detenerEscaner } from './scanner.js';
 
 // Función de inicialización
 async function init() {
@@ -33,11 +33,6 @@ async function init() {
         const botonBuscarEditar = document.getElementById("buscarEditar");
         if (botonBuscarEditar) {
             botonBuscarEditar.addEventListener("click", buscarProductoParaEditar);
-        }
-
-        const botonBuscarInventario = document.getElementById("buscarInventario");
-        if (botonBuscarInventario) {
-            botonBuscarInventario.addEventListener("click", buscarProductoInventario);
         }
 
         // Event listeners para los botones de edición
@@ -93,6 +88,20 @@ async function init() {
                 "click",
                 generarHojaInventario
             );
+        }
+        document.head.appendChild(style);
+        const scannerContainer = document.getElementById("scanner-container");
+        if (scannerContainer) {
+            scannerContainer.appendChild(scannerOverlay);
+        }
+        // Event listener para el botón de cerrar escáner
+        const cerrarEscanerBtn = document.getElementById('cerrarEscaner');
+        if (cerrarEscanerBtn) {
+            cerrarEscanerBtn.addEventListener('click', detenerEscaner);
+        }
+        const botonBuscarInventario = document.getElementById("buscarInventario");
+        if (botonBuscarInventario) {
+            botonBuscarInventario.addEventListener("click", buscarProductoInventario);
         }
     } catch (error) {
         console.error("Error initializing the application:", error);

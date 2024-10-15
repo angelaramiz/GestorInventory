@@ -34,6 +34,45 @@ export function mostrarResultados(resultados) {
             '<p class="text-red-500">No se encontraron productos.</p>';
     }
 }
+export function mostrarResultadosInventario(resultados) {
+    const resultadosDiv = document.getElementById("resultadosInventario");
+    resultadosDiv.innerHTML = "";
+    
+    if (resultados.length === 0) {
+        resultadosDiv.innerHTML = "<p>No se encontraron productos.</p>";
+        resultadosDiv.style.display = "block";
+        document.getElementById("datosInventario").style.display = "none";
+        return;
+    }
+
+    if (resultados.length === 1) {
+        // Si solo hay un resultado, mostrar directamente el formulario de inventario
+        mostrarFormularioInventario(resultados[0]);
+        return;
+    }
+
+    // Mostrar múltiples resultados
+    resultados.forEach(producto => {
+        const productoDiv = document.createElement("div");
+        productoDiv.classList.add("bg-white", "p-4", "mb-2", "cursor-pointer", "hover:bg-gray-100");
+        productoDiv.innerHTML = `
+            <p><strong>Código:</strong> ${producto.codigo}</p>
+            <p><strong>Nombre:</strong> ${producto.nombre}</p>
+            <p><strong>Marca:</strong> ${producto.marca}</p>
+        `;
+        productoDiv.addEventListener("click", () => mostrarFormularioInventario(producto));
+        resultadosDiv.appendChild(productoDiv);
+    });
+
+    resultadosDiv.style.display = "block";
+    document.getElementById("datosInventario").style.display = "none";
+}
+export function mostrarFormularioInventario(producto) {
+    document.getElementById("resultadosInventario").style.display = "none";
+    document.getElementById("datosInventario").style.display = "block";
+    document.getElementById("nombreProductoInventario").value = producto.nombre;
+    // Aquí puedes añadir lógica para cargar datos de inventario existentes si es necesario
+}
 // Funciones para agregar producto
 export function agregarProducto(evento) {
     evento.preventDefault();
@@ -114,40 +153,33 @@ export function buscarProductoParaEditar() {
 // Funciones para inventario
 export function buscarProductoInventario() {
     const codigo = document.getElementById("codigoInventario").value;
+    const nombre = document.getElementById("nombreInventario").value;
+    const marca = document.getElementById("marcaInventario").value;
+
     const transaction = db.transaction(["productos"], "readonly");
     const objectStore = transaction.objectStore("productos");
-    const request = objectStore.get(codigo);
+    const request = objectStore.getAll();
 
     request.onsuccess = event => {
-        const producto = event.target.result;
-        if (producto) {
-            document.getElementById("nombreInventario").value = producto.nombre;
-            document.getElementById("datosInventario").style.display = "block";
-            if (producto.inventario) {
-                document.getElementById("cantidadTipo").value =
-                    producto.inventario.tipo;
-                document.getElementById("cantidad").value =
-                    producto.inventario.cantidad;
-                document.getElementById("fechaCaducidad").value =
-                    producto.inventario.fechaCaducidad;
-                document.getElementById("comentarios").value =
-                    producto.inventario.comentarios;
-            } else {
-                // Si no hay datos de inventario, limpiar los campos
-                document.getElementById("cantidadTipo").value = "";
-                document.getElementById("cantidad").value = "";
-                document.getElementById("fechaCaducidad").value = "";
-                document.getElementById("comentarios").value = "";
-            }
-        } else {
-            Swal.fire({
-                title: "Error",
-                text: "Producto no encontrado",
-                icon: "error",
-                timer: 1000,
-                showConfirmButton: false
-            });
-        }
+        const productos = event.target.result;
+        const resultados = productos.filter(producto => 
+            (codigo && producto.codigo === codigo) ||
+            (nombre && producto.nombre.toLowerCase().includes(nombre.toLowerCase())) ||
+            (marca && producto.marca.toLowerCase().includes(marca.toLowerCase()))
+        );
+
+        mostrarResultadosInventario(resultados);
+    };
+
+    request.onerror = event => {
+        console.error("Error al buscar productos:", event.target.error);
+        Swal.fire({
+            title: "Error",
+            text: "Error al buscar productos",
+            icon: "error",
+            timer: 2000,
+            showConfirmButton: false
+        });
     };
 }
 
