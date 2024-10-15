@@ -216,3 +216,14 @@ export function iniciarEscaneo(inputId) {
         cerrarEscanerBtn.addEventListener('click', detenerEscaner);
     }
 }
+// Nueva función para inicializar el escáner
+export function inicializarEscaner() {
+    const scannerContainer = document.getElementById("scanner-container");
+    if (scannerContainer && !document.getElementById('scanner-overlay')) {
+        scannerContainer.appendChild(scannerOverlay);
+    }
+    if (!document.getElementById('scanner-styles')) {
+        style.id = 'scanner-styles';
+        document.head.appendChild(style);
+    }
+}
