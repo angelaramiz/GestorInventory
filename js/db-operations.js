@@ -270,7 +270,7 @@ export function descargarInventarioPDF() {
                 yPos = 25;
             }
         });
-
+// agregar guardado con fecha
         doc.save("inventario.pdf");
     };
 }
