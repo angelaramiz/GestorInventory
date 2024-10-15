@@ -264,7 +264,7 @@ export function descargarInventarioPDF() {
             );
             doc.text(`Fecha de Caducidad: ${item.fechaCaducidad}`, 10, yPos + 15);
             yPos += 25;
-            doc.text(`Comentarios: ${item.comentarios}`, 10, yPos);
+            doc.text(`Comentarios: ${item.comentarios}`, 10, yPos + 20);
             if (yPos > 280) {
                 doc.addPage();
                 yPos = 20;
