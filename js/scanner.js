@@ -17,6 +17,25 @@ scannerOverlay.innerHTML = `
 // Agregar estilos
 const style = document.createElement('style');
 style.textContent = `
+    #scanner-container {
+    position: relative;
+    width: 100%;
+    max-width: 640px;
+    margin: 0 auto;
+    overflow: hidden;
+  }
+  #interactive.viewport {
+    width: 100%;
+    height: auto;
+    aspect-ratio: 4/3;
+  }
+  #interactive.viewport > video, #interactive.viewport > canvas {
+    width: 100%;
+    height: auto;
+    position: absolute;
+    top: 0;
+    left: 0;
+  }
   #scanner-overlay {
     position: absolute;
     top: 0;
@@ -57,17 +76,26 @@ style.textContent = `
     background-color: red;
     transition: background-color 0.3s ease;
   }
-  #scanner-container {
-    position: relative;
-  }
   #cerrarEscaner {
     position: absolute;
     bottom: 10px;
     left: 50%;
     transform: translateX(-50%);
     z-index: 10;
-  }
+    }
 `;
+
+// Función para inicializar el escáner
+export function inicializarEscaner() {
+    const scannerContainer = document.getElementById("scanner-container");
+    if (scannerContainer && !document.getElementById('scanner-overlay')) {
+        scannerContainer.appendChild(scannerOverlay);
+    }
+    if (!document.getElementById('scanner-styles')) {
+        style.id = 'scanner-styles';
+        document.head.appendChild(style);
+    }
+}
 
 // Función para cambiar el indicador de "listo para escanear"
 function setScannerReady(isReady) {
@@ -98,7 +126,7 @@ function playTone(frequency, duration, type = 'sine') {
     oscillator.stop(audioContext.currentTime + duration);
 }
 
-// Modificar la función toggleEscaner
+// Función para toggle del escáner
 export function toggleEscaner(inputId) {
     const scannerContainer = document.getElementById("scanner-container");
     if (escanerActivo) {
@@ -109,7 +137,7 @@ export function toggleEscaner(inputId) {
     }
 }
 
-// Nueva función para detener el escáner
+// Función para detener el escáner
 export function detenerEscaner() {
     Quagga.stop();
     const scannerContainer = document.getElementById("scanner-container");
@@ -117,21 +145,9 @@ export function detenerEscaner() {
     escanerActivo = false;
 }
 
-// Modificar la función iniciarEscaneo
+// Función para iniciar el escaneo
 export function iniciarEscaneo(inputId) {
     const scannerContainer = document.getElementById("scanner-container");
-
-    // Asegurarse de que el overlay se añada solo una vez
-    if (!document.getElementById('scanner-overlay')) {
-        scannerContainer.appendChild(scannerOverlay);
-    }
-
-    // Asegurarse de que los estilos se añadan solo una vez
-    if (!document.getElementById('scanner-styles')) {
-        style.id = 'scanner-styles';
-        document.head.appendChild(style);
-    }
-
     Quagga.init(
         {
             inputStream: {
@@ -139,14 +155,20 @@ export function iniciarEscaneo(inputId) {
                 type: "LiveStream",
                 target: scannerContainer,
                 constraints: {
-                    width: 480,
-                    height: 320,
+                    width: 640,
+                    height: 480,
                     facingMode: "environment"
                 }
             },
+            locator: {
+                patchSize: "medium",
+                halfSample: true
+            },
+            numOfWorkers: 2,
             decoder: {
                 readers: ["ean_reader", "ean_8_reader", "code_128_reader"]
-            }
+            },
+            locate: true
         },
         function (err) {
             if (err) {
@@ -209,21 +231,4 @@ export function iniciarEscaneo(inputId) {
             clearInterval(readyInterval);
         }
     }, 2000);
-
-    // Agregar evento al botón de cerrar
-    const cerrarEscanerBtn = document.getElementById('cerrarEscaner');
-    if (cerrarEscanerBtn) {
-        cerrarEscanerBtn.addEventListener('click', detenerEscaner);
-    }
-}
-// Nueva función para inicializar el escáner
-export function inicializarEscaner() {
-    const scannerContainer = document.getElementById("scanner-container");
-    if (scannerContainer && !document.getElementById('scanner-overlay')) {
-        scannerContainer.appendChild(scannerOverlay);
-    }
-    if (!document.getElementById('scanner-styles')) {
-        style.id = 'scanner-styles';
-        document.head.appendChild(style);
-    }
 }
