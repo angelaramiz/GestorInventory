@@ -1,8 +1,8 @@
 // Importaciones
 import { db, dbInventario, inicializarDB, inicializarDBInventario, cargarCSV, descargarCSV, cargarDatosEnTabla, cargarDatosInventarioEnTablaPlantilla, resetearBaseDeDatos, generarPlantillaInventario, descargarInventarioPDF, descargarInventarioCSV } from './db-operations.js';
 import { mostrarMensaje } from './logs.js';
-import {agregarProducto, buscarProducto, buscarProductoParaEditar,buscarProductoInventario,guardarCambios,eliminarProducto,guardarInventario,} from './product-operations.js';
-import { toggleEscaner, detenerEscaner,inicializarEscaner } from './scanner.js';
+import { agregarProducto, buscarProducto, buscarProductoParaEditar, buscarProductoInventario, guardarCambios, eliminarProducto, guardarInventario, } from './product-operations.js';
+import { toggleEscaner, detenerEscaner, inicializarEscaner } from './scanner.js';
 
 // Función de inicialización
 async function init() {
