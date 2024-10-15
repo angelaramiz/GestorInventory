@@ -253,7 +253,7 @@ export function descargarInventarioPDF() {
         const doc = new jsPDF();
         doc.text("Inventario", 10, 10);
 
-        let yPos = 20;
+        let yPos = 25;
         inventario.forEach(item => {
             doc.text(`Código: ${item.codigo}`, 10, yPos);
             doc.text(`Nombre: ${item.nombre}`, 10, yPos + 5);
@@ -267,7 +267,7 @@ export function descargarInventarioPDF() {
             doc.text(`Comentarios: ${item.comentarios}`, 10, yPos + 20);
             if (yPos > 280) {
                 doc.addPage();
-                yPos = 20;
+                yPos = 25;
             }
         });
 
