@@ -203,6 +203,7 @@ export function limpiarFormularioInventario() {
     document.getElementById("datosInventario").style.display = "none";
 }
 
+// funcion para buscar productos en la base de datos para inventariar
 export function buscarProductoInventario() {
     const codigo = document.getElementById("codigoInventario").value;
     const nombre = document.getElementById("nombreInventario").value;
