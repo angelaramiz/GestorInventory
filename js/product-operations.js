@@ -255,13 +255,13 @@ export function buscarProductoInventario() {
         if (resultados.length === 0) {
             // Producto no encontrado, preguntar al usuario si desea agregarlo
             Swal.fire({
-                title: 'Â¿Producto no encontrado',
-                text: 'Â¿Deseas agregar este producto?',
+                title: '¿Producto no encontrado',
+                text: '¿Deseas agregar este producto?',
                 icon: 'question',
                 showCancelButton: true,
                 confirmButtonColor: '#3085d6',
                 cancelButtonColor: '#d33',
-                confirmButtonText: 'SÃ­, agregar',
+                confirmButtonText: 'Sí­, agregar',
                 cancelButtonText: 'No'
             }).then((result) => {
                 if (result.isConfirmed) {
@@ -292,9 +292,9 @@ function agregarNuevoProductoDesdeInventario(codigo) {
     Swal.fire({
         title: 'Agregar Nuevo Producto',
         html:
-            '<input id="swal-codigo" class="swal2-input" placeholder="CÃ³digo" value="' + codigo + '" readonly>' +
+            '<input id="swal-codigo" class="swal2-input" placeholder="Código" value="' + codigo + '" readonly>' +
             '<input id="swal-nombre" class="swal2-input" placeholder="Nombre">' +
-            '<input id="swal-categoria" class="swal2-input" placeholder="CategorÃ­a">' +
+            '<input id="swal-categoria" class="swal2-input" placeholder="Categorí­a">' +
             '<input id="swal-marca" class="swal2-input" placeholder="Marca">',
         focusConfirm: false,
         showCancelButton: true,
@@ -324,7 +324,7 @@ export function agregarProductoABaseDeDatos(producto) {
     request.onsuccess = event => {
         console.log("Producto agregado exitosamente");
         Swal.fire({
-            title: "Ã‰xito",
+            title: "Éxito",
             text: "Producto agregado exitosamente",
             icon: "success",
             timer: 1500,
@@ -339,7 +339,7 @@ export function agregarProductoABaseDeDatos(producto) {
         console.error("Error al agregar producto", event.target.error);
         Swal.fire({
             title: "Error",
-            text: "Error al agregar el producto. Es posible que el cÃ³digo ya exista.",
+            text: "Error al agregar el producto. Es posible que el código ya exista.",
             icon: "error",
             timer: 2000,
             showConfirmButton: false
