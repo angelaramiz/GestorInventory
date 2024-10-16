@@ -150,38 +150,6 @@ export function buscarProductoParaEditar() {
         }
     };
 }
-// Funciones para inventario
-export function buscarProductoInventario() {
-    const codigo = document.getElementById("codigoInventario").value;
-    const nombre = document.getElementById("nombreInventario").value;
-    const marca = document.getElementById("marcaInventario").value;
-
-    const transaction = db.transaction(["productos"], "readonly");
-    const objectStore = transaction.objectStore("productos");
-    const request = objectStore.getAll();
-
-    request.onsuccess = event => {
-        const productos = event.target.result;
-        const resultados = productos.filter(producto => 
-            (codigo && producto.codigo === codigo) ||
-            (nombre && producto.nombre.toLowerCase().includes(nombre.toLowerCase())) ||
-            (marca && producto.marca.toLowerCase().includes(marca.toLowerCase()))
-        );
-
-        mostrarResultadosInventario(resultados);
-    };
-
-    request.onerror = event => {
-        console.error("Error al buscar productos:", event.target.error);
-        Swal.fire({
-            title: "Error",
-            text: "Error al buscar productos",
-            icon: "error",
-            timer: 2000,
-            showConfirmButton: false
-        });
-    };
-}
 
 export function guardarCambios() {
     const codigo = document.getElementById("codigoEditar").value;
