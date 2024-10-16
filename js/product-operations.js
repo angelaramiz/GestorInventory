@@ -235,6 +235,118 @@ export function limpiarFormularioInventario() {
     document.getElementById("datosInventario").style.display = "none";
 }
 
+export function buscarProductoInventario() {
+    const codigo = document.getElementById("codigoInventario").value;
+    const nombre = document.getElementById("nombreInventario").value;
+    const marca = document.getElementById("marcaInventario").value;
+
+    const transaction = db.transaction(["productos"], "readonly");
+    const objectStore = transaction.objectStore("productos");
+    const request = objectStore.getAll();
+
+    request.onsuccess = event => {
+        const productos = event.target.result;
+        const resultados = productos.filter(producto => 
+            (codigo && producto.codigo === codigo) ||
+            (nombre && producto.nombre.toLowerCase().includes(nombre.toLowerCase())) ||
+            (marca && producto.marca.toLowerCase().includes(marca.toLowerCase()))
+        );
+
+        if (resultados.length === 0) {
+            // Producto no encontrado, preguntar al usuario si desea agregarlo
+            Swal.fire({
+                title: 'Â¿Producto no encontrado',
+                text: 'Â¿Deseas agregar este producto?',
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#d33',
+                confirmButtonText: 'SÃ­, agregar',
+                cancelButtonText: 'No'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    agregarNuevoProductoDesdeInventario(codigo);
+                } else {
+                    // Continuar con la lÃ³gica por defecto para productos no encontrados
+                    mostrarResultadosInventario([]);
+                }
+            });
+        } else {
+            mostrarResultadosInventario(resultados);
+        }
+    };
+
+    request.onerror = event => {
+        console.error("Error al buscar productos:", event.target.error);
+        Swal.fire({
+            title: "Error",
+            text: "Error al buscar productos",
+            icon: "error",
+            timer: 2000,
+            showConfirmButton: false
+        });
+    };
+}
+
+function agregarNuevoProductoDesdeInventario(codigo) {
+    Swal.fire({
+        title: 'Agregar Nuevo Producto',
+        html:
+            '<input id="swal-codigo" class="swal2-input" placeholder="CÃ³digo" value="' + codigo + '" readonly>' +
+            '<input id="swal-nombre" class="swal2-input" placeholder="Nombre">' +
+            '<input id="swal-categoria" class="swal2-input" placeholder="CategorÃ­a">' +
+            '<input id="swal-marca" class="swal2-input" placeholder="Marca">',
+        focusConfirm: false,
+        showCancelButton: true,
+        confirmButtonText: 'Agregar',
+        cancelButtonText: 'Cancelar',
+        preConfirm: () => {
+            return {
+                codigo: document.getElementById('swal-codigo').value,
+                nombre: document.getElementById('swal-nombre').value,
+                categoria: document.getElementById('swal-categoria').value,
+                marca: document.getElementById('swal-marca').value
+            }
+        }
+    }).then((result) => {
+        if (result.isConfirmed) {
+            const nuevoProducto = result.value;
+            agregarProductoABaseDeDatos(nuevoProducto);
+        }
+    });
+}
+
+export function agregarProductoABaseDeDatos(producto) {
+    const transaction = db.transaction(["productos"], "readwrite");
+    const objectStore = transaction.objectStore("productos");
+    const request = objectStore.add(producto);
+
+    request.onsuccess = event => {
+        console.log("Producto agregado exitosamente");
+        Swal.fire({
+            title: "Ã‰xito",
+            text: "Producto agregado exitosamente",
+            icon: "success",
+            timer: 1500,
+            showConfirmButton: false
+        }).then(() => {
+            // Continuar con la lÃ³gica del inventario
+            mostrarFormularioInventario(producto);
+        });
+    };
+
+    request.onerror = event => {
+        console.error("Error al agregar producto", event.target.error);
+        Swal.fire({
+            title: "Error",
+            text: "Error al agregar el producto. Es posible que el cÃ³digo ya exista.",
+            icon: "error",
+            timer: 2000,
+            showConfirmButton: false
+        });
+    };
+}
+
 // Función para guardar inventario en nueva base de datos
 export function guardarInventario() {
     const codigo = document.getElementById("codigoInventario").value;
