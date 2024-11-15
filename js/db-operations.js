@@ -242,37 +242,169 @@ export function descargarInventarioCSV() {
 }
 
 export function descargarInventarioPDF() {
+    Swal.fire({
+        title: 'Opciones de Generación de PDF',
+        html: `
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700">Ordenar por:</label>
+                <select id="swal-orden" class="swal2-input">
+                    <option value="caducidad">Fecha de caducidad (próximos a caducar primero)</option>
+                    <option value="nombre">Nombre del producto</option>
+                    <option value="categoria">Categoría</option>
+                </select>
+            </div>
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700">Filtrar por caducidad:</label>
+                <select id="swal-filtro-caducidad" class="swal2-input">
+                    <option value="todos">Mostrar todos</option>
+                    <option value="proximos">Próximos a caducar (30 días)</option>
+                    <option value="mes">Por mes específico</option>
+                </select>
+            </div>
+            <div id="mes-especifico" style="display: none;">
+                <label class="block text-sm font-medium text-gray-700">Seleccionar mes:</label>
+                <input type="month" id="swal-mes" class="swal2-input" value="${new Date().toISOString().slice(0, 7)}">
+            </div>
+        `,
+        didOpen: () => {
+            // Mostrar/ocultar selector de mes específico
+            const filtroSelect = document.getElementById('swal-filtro-caducidad');
+            const mesDiv = document.getElementById('mes-especifico');
+            
+            filtroSelect.addEventListener('change', (e) => {
+                mesDiv.style.display = e.target.value === 'mes' ? 'block' : 'none';
+            });
+        },
+        showCancelButton: true,
+        confirmButtonText: 'Generar PDF',
+        cancelButtonText: 'Cancelar',
+        focusConfirm: false,
+        preConfirm: () => {
+            return {
+                orden: document.getElementById('swal-orden').value,
+                filtroCaducidad: document.getElementById('swal-filtro-caducidad').value,
+                mesEspecifico: document.getElementById('swal-mes').value
+            };
+        }
+    }).then((result) => {
+        if (result.isConfirmed) {
+            generarPDFConOpciones(result.value);
+        }
+    });
+}
+
+function generarPDFConOpciones(opciones) {
     const transaction = dbInventario.transaction(["inventario"], "readonly");
     const objectStore = transaction.objectStore("inventario");
     const request = objectStore.getAll();
 
     request.onsuccess = function (event) {
-        const inventario = event.target.result;
-        console.log(window.jspdf);
+        let inventario = event.target.result;
+
+        // Aplicar filtros según las opciones seleccionadas
+        inventario = filtrarInventario(inventario, opciones);
+
+        // Ordenar según la opción seleccionada
+        inventario = ordenarInventario(inventario, opciones.orden);
+
+        // Generar el PDF
         const { jsPDF } = window.jspdf;
         const doc = new jsPDF();
-        doc.text("Inventario", 10, 10);
 
-        let yPos = 25;
+        // Configurar el título y la fecha del reporte
+        doc.setFontSize(16);
+        doc.text("Reporte de Inventario", 10, 10);
+        doc.setFontSize(10);
+        doc.text(`Generado el: ${new Date().toLocaleDateString()}`, 10, 20);
+
+        // Agregar información del filtro aplicado
+        let filtroTexto = "Filtro aplicado: ";
+        switch(opciones.filtroCaducidad) {
+            case 'proximos':
+                filtroTexto += "Productos próximos a caducar (30 días)";
+                break;
+            case 'mes':
+                const fecha = new Date(opciones.mesEspecifico);
+                filtroTexto += `Mes específico: ${fecha.toLocaleDateString('es-ES', { month: 'long', year: 'numeric' })}`;
+                break;
+            default:
+                filtroTexto += "Todos los productos";
+        }
+        doc.text(filtroTexto, 10, 30);
+
+        // Agregar los productos al PDF
+        let yPos = 40;
         inventario.forEach(item => {
+            // Verificar si hay espacio suficiente en la página actual
+            if (yPos > 250) {
+                doc.addPage();
+                yPos = 20;
+            }
+
+            doc.setFontSize(12);
             doc.text(`Código: ${item.codigo}`, 10, yPos);
             doc.text(`Nombre: ${item.nombre}`, 10, yPos + 5);
-            doc.text(
-                `Cantidad: ${item.cantidad} ${item.tipoQuantidad}`,
-                10,
-                yPos + 10
-            );
+            doc.text(`Cantidad: ${item.cantidad} ${item.tipoQuantidad}`, 10, yPos + 10);
             doc.text(`Fecha de Caducidad: ${item.fechaCaducidad}`, 10, yPos + 15);
-            doc.text(`Comentarios: ${item.comentarios}`, 10, yPos + 20);
+            doc.setFontSize(10);
+            doc.text(`Comentarios: ${item.comentarios || 'N/A'}`, 10, yPos + 20);
+            
             yPos += 30;
-            if (yPos > 280) {
-                doc.addPage();
-                yPos = 25;
-            }
         });
-// agregar guardado con fecha
+
         doc.save("inventario.pdf");
     };
+
+    request.onerror = function (error) {
+        console.error("Error al obtener los datos del inventario:", error);
+        Swal.fire({
+            title: "Error",
+            text: "No se pudo generar el PDF",
+            icon: "error",
+            timer: 2000,
+            showConfirmButton: false
+        });
+    };
+}
+
+function filtrarInventario(inventario, opciones) {
+    return inventario.filter(item => {
+        const fechaCaducidad = new Date(item.fechaCaducidad);
+        const hoy = new Date();
+
+        switch(opciones.filtroCaducidad) {
+            case 'proximos':
+                const treintaDias = new Date();
+                treintaDias.setDate(treintaDias.getDate() + 30);
+                return fechaCaducidad <= treintaDias && fechaCaducidad >= hoy;
+
+            case 'mes':
+                const mesSeleccionado = new Date(opciones.mesEspecifico);
+                return fechaCaducidad.getMonth() === mesSeleccionado.getMonth() &&
+                       fechaCaducidad.getFullYear() === mesSeleccionado.getFullYear();
+
+            default:
+                return true; // Mostrar todos
+        }
+    });
+}
+
+function ordenarInventario(inventario, orden) {
+    return inventario.sort((a, b) => {
+        switch(orden) {
+            case 'caducidad':
+                return new Date(a.fechaCaducidad) - new Date(b.fechaCaducidad);
+                
+            case 'nombre':
+                return a.nombre.localeCompare(b.nombre);
+                
+            case 'categoria':
+                return a.categoria.localeCompare(b.categoria);
+                
+            default:
+                return 0;
+        }
+    });
 }
 
 // Función para cargar datos en la tabla de la página de archivos
