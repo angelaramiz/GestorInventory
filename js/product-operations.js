@@ -344,7 +344,7 @@ export async function buscarProductoInventario() {
         
         if (productosResultados.length === 0) {
             // Si no se encuentra el producto, preguntar si desea agregarlo
-            preguntarAgregarNuevoProducto(codigo);
+            agregarNuevoProductoDesdeInventario(codigo);
             return;
         }
 
