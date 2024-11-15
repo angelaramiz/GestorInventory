@@ -203,57 +203,73 @@ export function limpiarFormularioInventario() {
     document.getElementById("datosInventario").style.display = "none";
 }
 
-// funcion para buscar productos en la base de datos para inventariar
-export function buscarProductoInventario() {
+// funcion para guardar productos en la base de datos para inventariar
+export function guardarInventario() {
     const codigo = document.getElementById("codigoInventario").value;
-    const nombre = document.getElementById("nombreInventario").value;
-    const marca = document.getElementById("marcaInventario").value;
-
+    const lote = document.getElementById("loteInventario")?.value || "1";
+    
     const transaction = db.transaction(["productos"], "readonly");
     const objectStore = transaction.objectStore("productos");
-    const request = objectStore.getAll();
+    const request = objectStore.get(codigo);
 
     request.onsuccess = event => {
-        const productos = event.target.result;
-        const resultados = productos.filter(producto => 
-            (codigo && producto.codigo === codigo) ||
-            (nombre && producto.nombre.toLowerCase().includes(nombre.toLowerCase())) ||
-            (marca && producto.marca.toLowerCase().includes(marca.toLowerCase()))
-        );
+        const producto = event.target.result;
+        if (producto) {
+            const inventarioData = {
+                codigo: producto.codigo,
+                nombre: producto.nombre,
+                categoria: producto.categoria,
+                marca: producto.marca,
+                lote: lote, // Agregamos el número de lote
+                tipoQuantidad: document.getElementById("cantidadTipo").value,
+                cantidad: document.getElementById("cantidad").value,
+                fechaCaducidad: document.getElementById("fechaCaducidad").value,
+                comentarios: document.getElementById("comentarios").value
+            };
 
-        if (resultados.length === 0) {
-            // Producto no encontrado, preguntar al usuario si desea agregarlo
-            Swal.fire({
-                title: '¿Producto no encontrado',
-                text: '¿Deseas agregar este producto?',
-                icon: 'question',
-                showCancelButton: true,
-                confirmButtonColor: '#3085d6',
-                cancelButtonColor: '#d33',
-                confirmButtonText: 'Sí­, agregar',
-                cancelButtonText: 'No'
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    agregarNuevoProductoDesdeInventario(codigo);
-                } else {
-                    // Continuar con la lÃ³gica por defecto para productos no encontrados
-                    mostrarResultadosInventario([]);
-                }
-            });
+            const inventarioTransaction = dbInventario.transaction(
+                ["inventario"],
+                "readwrite"
+            );
+            const inventarioObjectStore = inventarioTransaction.objectStore(
+                "inventario"
+            );
+            
+            // Usar una clave compuesta de código y lote
+            const key = `${codigo}-${lote}`;
+            inventarioData.id = key; // Agregar un ID único
+            
+            const addRequest = inventarioObjectStore.put(inventarioData);
+
+            addRequest.onsuccess = () => {
+                Swal.fire({
+                    title: "Éxito",
+                    text: `Inventario guardado correctamente (Lote #${lote})`,
+                    icon: "success",
+                    timer: 1500,
+                    showConfirmButton: false
+                });
+                limpiarFormularioInventario();
+            };
+            addRequest.onerror = error => {
+                console.error("Error al guardar el inventario:", error);
+                Swal.fire({
+                    title: "Error",
+                    text: "Error al guardar el inventario",
+                    icon: "error",
+                    timer: 1500,
+                    showConfirmButton: false
+                });
+            };
         } else {
-            mostrarResultadosInventario(resultados);
+            Swal.fire({
+                title: "Error",
+                text: "Producto no encontrado",
+                icon: "error",
+                timer: 1500,
+                showConfirmButton: false
+            });
         }
-    };
-
-    request.onerror = event => {
-        console.error("Error al buscar productos:", event.target.error);
-        Swal.fire({
-            title: "Error",
-            text: "Error al buscar productos",
-            icon: "error",
-            timer: 2000,
-            showConfirmButton: false
-        });
     };
 }
 
@@ -316,7 +332,7 @@ export function agregarProductoABaseDeDatos(producto) {
     };
 }
 
-// Función para guardar inventario en nueva base de datos
+// Función para buscar inventario en nueva base de datos
 export async function buscarProductoInventario() {
     const codigo = document.getElementById("codigoInventario").value;
     const nombre = document.getElementById("nombreInventario").value;
