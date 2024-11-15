@@ -43,7 +43,7 @@ export function inicializarDB() {
 // Inicialización de la base de datos de inventario
 export function inicializarDBInventario() {
     return new Promise((resolve, reject) => {
-        const request = indexedDB.open("InventarioDB", 1);
+        const request = indexedDB.open("InventarioDB", 2); // Incrementamos la versión para forzar la actualización
 
         request.onerror = event => {
             console.error(
@@ -61,25 +61,37 @@ export function inicializarDBInventario() {
 
         request.onupgradeneeded = event => {
             dbInventario = event.target.result;
+            
+            // Si existe el almacén anterior, lo eliminamos
+            if (dbInventario.objectStoreNames.contains("inventario")) {
+                dbInventario.deleteObjectStore("inventario");
+            }
+
+            // Crear el nuevo almacén con la estructura actualizada
             const objectStore = dbInventario.createObjectStore("inventario", {
-                keyPath: "codigo"
+                keyPath: "id" // Cambiamos keyPath a "id" para manejar la combinación código-lote
             });
-            objectStore.createIndex("codigo", "codigo", { unique: true });
+
+            // Crear índices
+            objectStore.createIndex("id", "id", { unique: true });
+            objectStore.createIndex("codigo", "codigo", { unique: false });
+            objectStore.createIndex("lote", "lote", { unique: false });
             objectStore.createIndex("nombre", "nombre", { unique: false });
             objectStore.createIndex("categoria", "categoria", { unique: false });
             objectStore.createIndex("marca", "marca", { unique: false });
-            objectStore.createIndex("tipoQuantidad", "tipoQuantidad", {
-                unique: false
-            });
+            objectStore.createIndex("tipoQuantidad", "tipoQuantidad", { unique: false });
             objectStore.createIndex("cantidad", "cantidad", { unique: false });
-            objectStore.createIndex("fechaCaducidad", "fechaCaducidad", {
-                unique: false
-            });
+            objectStore.createIndex("fechaCaducidad", "fechaCaducidad", { unique: false });
             objectStore.createIndex("comentarios", "comentarios", { unique: false });
-            console.log("Base de datos de inventario creada/actualizada");
+            
+            // Crear índice compuesto para código y lote
+            objectStore.createIndex("codigo_lote", ["codigo", "lote"], { unique: true });
+
+            console.log("Base de datos de inventario creada/actualizada con nuevo esquema");
         };
     });
 }
+
 
 export function resetearBaseDeDatos(database, storeName) {
     const transaction = database.transaction([storeName], "readwrite");
@@ -222,9 +234,9 @@ export function descargarInventarioCSV() {
     request.onsuccess = function (event) {
         const inventario = event.target.result;
         let csv =
-            "codigo,Nombre,Categoría,Marca,Tipo de Cantidad,Cantidad,Fecha de Caducidad,Comentarios\n";
+            "Código,Nombre,Categoría,Marca,Lote,Tipo de Cantidad,Cantidad,Fecha de Caducidad,Comentarios\n";
         inventario.forEach(item => {
-            csv += `${item.codigo},${item.nombre},${item.categoria},${item.marca},${item.tipoQuantidad},${item.cantidad},${item.fechaCaducidad},${item.comentarios}\n`;
+            csv += `${item.codigo},${item.nombre},${item.categoria},${item.marca},${item.lote},${item.tipoQuantidad},${item.cantidad},${item.fechaCaducidad},${item.comentarios}\n`;
         });
 
         const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
@@ -480,12 +492,10 @@ export function generarPlantillaInventario() {
     request.onsuccess = function (event) {
         const productos = event.target.result;
         let csv =
-            "Código,Nombre,Tipo de Cantidad,Cantidad,Fecha de Caducidad,Fecha de Ingreso,Comentarios\n";
+            "Código,Nombre,Lote,Tipo de Cantidad,Cantidad,Fecha de Caducidad,Comentarios\n";
         productos.forEach(producto => {
-            const { inventario = {} } = producto; // Agregar inventario si existe
-            csv += `${producto.codigo},${producto.nombre},${inventario.tipo ||
-                ""},${inventario.cantidad || ""},${inventario.fechaCaducidad ||
-                ""},${inventario.comentarios || ""}\n`;
+            const { inventario = {} } = producto;
+            csv += `${producto.codigo},${producto.nombre},1,${inventario.tipo || ""},${inventario.cantidad || ""},${inventario.fechaCaducidad || ""},${inventario.comentarios || ""}\n`;
         });
 
         const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
@@ -500,12 +510,5 @@ export function generarPlantillaInventario() {
             document.body.removeChild(link);
         }
     };
-
-    request.onerror = function (event) {
-        console.error(
-            "Error al generar la plantilla de inventario:",
-            event.target.error
-        );
-        mostrarMensaje("Error al generar la plantilla de inventario", "error");
-    };
 }
+
