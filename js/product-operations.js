@@ -319,6 +319,8 @@ export function agregarProductoABaseDeDatos(producto) {
 // Función para guardar inventario en nueva base de datos
 export function guardarInventario() {
     const codigo = document.getElementById("codigoInventario").value;
+    const lote = document.getElementById("loteInventario")?.value || "1";
+    
     const transaction = db.transaction(["productos"], "readonly");
     const objectStore = transaction.objectStore("productos");
     const request = objectStore.get(codigo);
@@ -331,6 +333,7 @@ export function guardarInventario() {
                 nombre: producto.nombre,
                 categoria: producto.categoria,
                 marca: producto.marca,
+                lote: lote, // Agregamos el número de lote
                 tipoQuantidad: document.getElementById("cantidadTipo").value,
                 cantidad: document.getElementById("cantidad").value,
                 fechaCaducidad: document.getElementById("fechaCaducidad").value,
@@ -344,17 +347,21 @@ export function guardarInventario() {
             const inventarioObjectStore = inventarioTransaction.objectStore(
                 "inventario"
             );
+            
+            // Usar una clave compuesta de código y lote
+            const key = `${codigo}-${lote}`;
+            inventarioData.id = key; // Agregar un ID único
+            
             const addRequest = inventarioObjectStore.put(inventarioData);
 
             addRequest.onsuccess = () => {
                 Swal.fire({
                     title: "Éxito",
-                    text: "Inventario guardado correctamente",
+                    text: `Inventario guardado correctamente (Lote #${lote})`,
                     icon: "success",
-                    timer: 1000,
+                    timer: 1500,
                     showConfirmButton: false
                 });
-                // Limpiar el formulario y ocultarlo
                 limpiarFormularioInventario();
             };
             addRequest.onerror = error => {
@@ -363,7 +370,7 @@ export function guardarInventario() {
                     title: "Error",
                     text: "Error al guardar el inventario",
                     icon: "error",
-                    timer: 1000,
+                    timer: 1500,
                     showConfirmButton: false
                 });
             };
@@ -372,20 +379,9 @@ export function guardarInventario() {
                 title: "Error",
                 text: "Producto no encontrado",
                 icon: "error",
-                timer: 1000,
+                timer: 1500,
                 showConfirmButton: false
             });
         }
-    };
-
-    request.onerror = error => {
-        console.error("Error al obtener el producto:", error);
-        Swal.fire({
-            title: "Error",
-            text: "Error al obtener el producto",
-            icon: "error",
-            timer: 1000,
-            showConfirmButton: false
-        });
     };
 }
