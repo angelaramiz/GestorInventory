@@ -193,6 +193,7 @@ export function eliminarProducto() {
     };
 }
 
+// Actualizar la función limpiarFormularioInventario
 export function limpiarFormularioInventario() {
     document.getElementById("codigoInventario").value = "";
     document.getElementById("nombreInventario").value = "";
@@ -201,9 +202,17 @@ export function limpiarFormularioInventario() {
     document.getElementById("fechaCaducidad").value = "";
     document.getElementById("comentarios").value = "";
     document.getElementById("datosInventario").style.display = "none";
+    
+    // Remover el input de lote si existe
+    const loteInput = document.getElementById("loteInventario");
+    if (loteInput) {
+        loteInput.remove();
+    }
 }
 
+
 // funcion para guardar productos en la base de datos para inventariar
+// Actualizar la función guardarInventario para manejar lotes
 export function guardarInventario() {
     const codigo = document.getElementById("codigoInventario").value;
     const lote = document.getElementById("loteInventario")?.value || "1";
@@ -216,11 +225,12 @@ export function guardarInventario() {
         const producto = event.target.result;
         if (producto) {
             const inventarioData = {
+                id: `${codigo}-${lote}`, // Crear ID único combinando código y lote
                 codigo: producto.codigo,
                 nombre: producto.nombre,
                 categoria: producto.categoria,
                 marca: producto.marca,
-                lote: lote, // Agregamos el número de lote
+                lote: lote,
                 tipoQuantidad: document.getElementById("cantidadTipo").value,
                 cantidad: document.getElementById("cantidad").value,
                 fechaCaducidad: document.getElementById("fechaCaducidad").value,
@@ -234,10 +244,6 @@ export function guardarInventario() {
             const inventarioObjectStore = inventarioTransaction.objectStore(
                 "inventario"
             );
-            
-            // Usar una clave compuesta de código y lote
-            const key = `${codigo}-${lote}`;
-            inventarioData.id = key; // Agregar un ID único
             
             const addRequest = inventarioObjectStore.put(inventarioData);
 
@@ -270,6 +276,17 @@ export function guardarInventario() {
                 showConfirmButton: false
             });
         }
+    };
+
+    request.onerror = error => {
+        console.error("Error al obtener el producto:", error);
+        Swal.fire({
+            title: "Error",
+            text: "Error al obtener el producto",
+            icon: "error",
+            timer: 1500,
+            showConfirmButton: false
+        });
     };
 }
 
@@ -465,17 +482,27 @@ function obtenerUltimoLote(productosInventario) {
 // Función para mostrar formulario de nuevo lote
 function mostrarFormularioNuevoLote(productoOriginal, nuevoLote) {
     document.getElementById("datosInventario").style.display = "block";
+    // Mantener los datos del producto original
+    document.getElementById("codigoInventario").value = productoOriginal.codigo;
     document.getElementById("nombreProductoInventario").value = productoOriginal.nombre;
-    // Limpiar otros campos
+    // Limpiar campos de inventario
     document.getElementById("cantidadTipo").value = "";
     document.getElementById("cantidad").value = "";
     document.getElementById("fechaCaducidad").value = "";
     document.getElementById("comentarios").value = "";
+    
     // Agregar número de lote
     const loteInput = document.createElement("input");
     loteInput.type = "hidden";
     loteInput.id = "loteInventario";
     loteInput.value = nuevoLote;
+    
+    // Remover lote anterior si existe
+    const loteAnterior = document.getElementById("loteInventario");
+    if (loteAnterior) {
+        loteAnterior.remove();
+    }
+    
     document.getElementById("datosInventario").appendChild(loteInput);
     
     // Mostrar el número de lote al usuario
@@ -487,6 +514,7 @@ function mostrarFormularioNuevoLote(productoOriginal, nuevoLote) {
         showConfirmButton: false
     });
 }
+
 
 // Función para reiniciar la búsqueda
 function reiniciarBusqueda() {
