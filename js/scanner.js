@@ -168,7 +168,7 @@ export function iniciarEscaneo(inputId) {
             (decodedText) => {
                 console.log("Código detectado:", decodedText);
                 console.log(inputId)
-                
+                document.getElementById(inputId).value = decodedText;
                 detenerEscaner();
                 
                 // Notificar al usuario
@@ -179,7 +179,15 @@ export function iniciarEscaneo(inputId) {
                     timer: 1500,
                     showConfirmButton: false
                 });
-                document.getElementById(inputId).value = decodedText;
+                
+                // Lógica existente para diferentes páginas
+                if (inputId === "codigoConsulta") {
+                  buscarProducto();
+                } else if (inputId === "codigoEditar") {
+                  buscarProductoParaEditar();
+                } else if (inputId === "codigo") {
+                  buscarProductoInventario();
+                }
             },
             (error) => {
                 console.log("Error de escaneo:", error);
