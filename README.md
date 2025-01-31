@@ -1,5 +1,5 @@
 
-```markdown
+
 # GestorInventory
 
 GestorInventory es un sistema de gestión de inventario basado en web que permite administrar productos e inventarios utilizando tecnologías modernas como JavaScript y IndexedDB para almacenamiento local.
