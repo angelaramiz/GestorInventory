@@ -28,29 +28,39 @@ export function mostrarResultadoCarga(successCount, errorCount) {
     const mensaje = `Carga completada. ${successCount} productos agregados/actualizados. ${errorCount} errores.`;
     const icon = errorCount > 0 ? "warning" : "success";
     const totalOperaciones = successCount + errorCount;
-    let progressBar = "";
+    let progressBarHTML = "";
+    let porcentajeExito = 0;
 
-    if (errorCount > 0 && totalOperaciones > 0) {
-        const porcentajeExito = successCount / totalOperaciones * 100;
-        progressBar = `
+    if (totalOperaciones > 0) {
+        porcentajeExito = Math.round((successCount / totalOperaciones) * 100);
+        // Inicializamos la barra con width 0%
+        progressBarHTML = `
         <div class="progress-bar-container">
-            <div class="progress-bar" style="width: ${porcentajeExito}%;"></div>
+            <div class="progress-bar" style="width: 0%;"></div>
         </div>`;
     } else {
-        progressBar =
+        progressBarHTML =
             '<p class="text-gray-500 mt-2">No se registraron operaciones</p>';
     }
 
     Swal.fire({
         title: errorCount > 0 ? "Advertencia" : "Éxito",
-        html: `${mensaje}${progressBar}`,
+        html: `${mensaje}${progressBarHTML}`,
         icon: icon,
         timer: 4000,
         showConfirmButton: false,
         didOpen: () => {
-            if (progressBar) {
-                const progressBarElement = document.querySelector(".progress-bar");
+            // Buscamos el elemento de la barra de progreso
+            const progressBarElement = document.querySelector(".progress-bar");
+            if (progressBarElement) {
+                // Forzamos un reflow para asegurarnos de que se registre el estado inicial
+                progressBarElement.offsetWidth; 
+                // Establecemos la transición
                 progressBarElement.style.transition = "width 2s ease-in-out";
+                // Actualizamos el ancho después de un breve retraso para activar la animación
+                setTimeout(() => {
+                    progressBarElement.style.width = `${porcentajeExito}%`;
+                }, 50);
             }
         },
         willClose: () => {
