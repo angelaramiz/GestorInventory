@@ -47,7 +47,7 @@ export function mostrarResultadoCarga(successCount, errorCount) {
         title: errorCount > 0 ? "Advertencia" : "Éxito",
         html: `${mensaje}${progressBarHTML}`,
         icon: icon,
-        timer: 4000,
+        timer: 2000,
         showConfirmButton: false,
         didOpen: () => {
             // Buscamos el elemento de la barra de progreso
