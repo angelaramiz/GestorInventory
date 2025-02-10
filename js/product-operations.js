@@ -72,6 +72,8 @@ export function mostrarFormularioInventario(producto) {
     document.getElementById("resultadosInventario").style.display = "none";
     document.getElementById("datosInventario").style.display = "block";
     document.getElementById("unidadProducto").value = producto.unidad || "";
+    document.getElementById("nombreProductoInventario").value = producto.nombre;
+
     // Aquí puedes añadir lógica para cargar datos de inventario existentes si es necesario
 }
 // Funciones para agregar producto
