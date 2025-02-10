@@ -261,20 +261,32 @@ export function eliminarProducto() {
 
 // Actualizar la función limpiarFormularioInventario
 export function limpiarFormularioInventario() {
-    document.getElementById("codigo").value = "";
-    document.getElementById("nombreInventario").value = "";
-    document.getElementById("cantidadTipo").value = "";
-    document.getElementById("cantidad").value = "";
-    document.getElementById("fechaCaducidad").value = "";
-    document.getElementById("comentarios").value = "";
-    document.getElementById("datosInventario").style.display = "none";
-
-    // Remover el input de lote si existe
-    const loteInput = document.getElementById("loteInventario");
-    if (loteInput) {
-        loteInput.remove();
+    if (document.getElementById("unidadProducto")) {
+        document.getElementById("unidadProducto").value = "";
+    }
+    if (document.getElementById("codigo")) {
+        document.getElementById("codigo").value = "";
+    }
+    if (document.getElementById("nombreInventario")) {
+        document.getElementById("nombreInventario").value = "";
+    }
+    if (document.getElementById("cantidadTipo")) {
+        document.getElementById("cantidadTipo").value = "";
+    }
+    if (document.getElementById("cantidad")) {
+        document.getElementById("cantidad").value = "";
+    }
+    if (document.getElementById("fechaCaducidad")) {
+        document.getElementById("fechaCaducidad").value = "";
+    }
+    if (document.getElementById("comentarios")) {
+        document.getElementById("comentarios").value = "";
+    }
+    if (document.getElementById("datosInventario")) {
+        document.getElementById("datosInventario").style.display = "none";
     }
 }
+
 
 
 // funcion para guardar productos en la base de datos para inventariar
@@ -310,6 +322,11 @@ export function guardarInventario() {
             const inventarioTransaction = dbInventario.transaction(["inventario"], "readwrite");
             const inventarioObjectStore = inventarioTransaction.objectStore("inventario");
             const addRequest = inventarioObjectStore.put(inventarioData);
+            if (!document.getElementById("datosInventario").style.display === "block") {
+                console.warn("El formulario de inventario no está visible.");
+                return;
+            }
+            
 
             addRequest.onsuccess = () => {
                 Swal.fire({
