@@ -115,7 +115,7 @@ export function buscarProducto() {
     const codigo = document.getElementById("codigoConsulta").value;
     const nombre = document.getElementById("nombreConsulta").value;
     const categoria = document.getElementById("categoriaConsulta").value;
-
+    
     const transaction = db.transaction(["productos"], "readonly");
     const objectStore = transaction.objectStore("productos");
 
@@ -157,6 +157,7 @@ export function buscarProductoParaEditar() {
             document.getElementById("nombreEditar").value = producto.nombre;
             document.getElementById("categoriaEditar").value = producto.categoria;
             document.getElementById("marcaEditar").value = producto.marca;
+            document.getElementById("unidadEditar").value = producto.unidad;
             document.getElementById("formularioEdicion").style.display = "block";
         } else {
             mostrarMensaje("Producto no encontrado", "error");
