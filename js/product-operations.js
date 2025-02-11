@@ -194,7 +194,8 @@ export async function guardarCambios() {
             codigo: codigoNuevo,
             nombre: nombre,
             categoria: categoria,
-            marca: marca
+            marca: marca,
+            unidad: unidad 
         });
 
         if (!productoSanitizado) {
