@@ -187,7 +187,7 @@ export async function guardarCambios() {
         const nombre = document.getElementById("nombreEditar").value;
         const categoria = document.getElementById("categoriaEditar").value;
         const marca = document.getElementById("marcaEditar").value;
-
+        const unidad = document.getElementById("unidadEditar").value || "";
         // Sanitizar y validar el producto
         const productoSanitizado = sanitizarProducto({
             codigo: codigoNuevo,
