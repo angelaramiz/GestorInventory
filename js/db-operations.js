@@ -12,7 +12,7 @@ const dbVersion = 1;
 // 
 export async function obtenerProductos() {
     try {
-        const response = await fetch("http://localhost:5000/productos");
+        const response = await fetch("https://gestorinventory-backend-production.up.railway.app/productos");
         const productos = await response.json();
         return productos;
     } catch (error) {
