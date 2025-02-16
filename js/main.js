@@ -108,6 +108,14 @@ async function init() {
         // Obtener productos del backend y mostrarlos
         const productos = await obtenerProductos();
         console.log("Productos obtenidos del backend:", productos);
+        document.addEventListener('DOMContentLoaded', async () => {
+            const response = await fetch('https://gestorinventory-backend-production.up.railway.app/usuario');
+            const data = await response.json();
+        
+            if (!data.success && !window.location.pathname.includes('login.html') && !window.location.pathname.includes('registro.html')) {
+                window.location.href = 'plantillas/login.html';
+            }
+        });
     } catch (error) {
         console.error("Error initializing the application:", error);
         mostrarMensaje("Error al inicializar la aplicación. Por favor, recargue la página.", "error");
