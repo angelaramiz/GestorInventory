@@ -109,44 +109,21 @@ export function buscarPorCodigoParcial(codigoParcial) {
 
 
 // Funciones para agregar producto
-export function agregarProducto(evento) {
-    evento.preventDefault();
+export async function agregarProducto(codigo, nombre, categoria, marca, unidad) {
+    try {
+        const response = await fetch("http://localhost:5000/productos", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ codigo, nombre, categoria, marca, unidad })
+        });
 
-    const codigo = document.getElementById("codigoAgregar").value;
-    const nombre = document.getElementById("nombre").value;
-    const categoria = document.getElementById("categoria").value;
-    const marca = document.getElementById("marca").value;
-    const unidad = document.getElementById("unidad").value;
-
-    const producto = { codigo, nombre, categoria, marca, unidad };
-
-    const productosanitizado = sanitizarProducto(producto);
-    console.log(productosanitizado);
-    if (!productosanitizado) {
-        mostrarMensaje("Error: Datos de producto invalido", "error");
-        return;
+        const data = await response.json();
+        mostrarMensaje("Producto agregado:", data);
+    } catch (error) {
+        mostrarMensaje("Error al agregar producto:", error);
     }
-    
-    const transaction = db.transaction(["productos"], "readwrite");
-    const objectStore = transaction.objectStore("productos");
-
-    // Aquí asignamos request correctamente
-    const request = objectStore.put(productosanitizado)
-
-    request.onerror = event => {
-        console.error("Error al agregar producto", event.target.error);
-        mostrarMensaje(
-            "Error al agregar el producto. Es posible que el código ya exista.",
-            "error"
-        );
-    };
-
-    request.onsuccess = event => {
-        console.log("Producto agregado exitosamente");
-        mostrarMensaje("Producto agregado exitosamente", "exito");
-        document.getElementById("formAgregarProducto").reset();
-    };
 }
+
 // Funciones para consulta de producto
 export function buscarProducto() {
     const codigo = document.getElementById("codigoConsulta").value;

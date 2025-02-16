@@ -9,7 +9,16 @@ export let dbInventario;
 // Nombre y versión de la base de datos
 const dbName = "ProductosDB";
 const dbVersion = 1;
-
+// 
+export async function obtenerProductos() {
+    try {
+        const response = await fetch("http://localhost:5000/productos");
+        const productos = await response.json();
+        return productos;
+    } catch (error) {
+        mostrarMensaje("Error al obtener productos:", error);
+    }
+}
 
 // Inicialización de la base de datos
 export function inicializarDB() {
