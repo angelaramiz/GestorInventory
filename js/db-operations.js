@@ -16,7 +16,7 @@ export async function obtenerProductos() {
         const productos = await response.json();
         return productos;
     } catch (error) {
-        mostrarMensaje("Error al obtener productos:", error);
+        mostrarMensaje(`Error al obtener productos: ${error.message}`, "error");
     }
 }
 
