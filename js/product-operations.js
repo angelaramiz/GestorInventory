@@ -111,7 +111,7 @@ export function buscarPorCodigoParcial(codigoParcial) {
 // Funciones para agregar producto
 export async function agregarProducto(codigo, nombre, categoria, marca, unidad) {
     try {
-        const response = await fetch("http://localhost:5000/productos", {
+        const response = await fetch("https://gestorinventory-backend-production.up.railway.app/productos", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ codigo, nombre, categoria, marca, unidad })
