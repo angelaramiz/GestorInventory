@@ -445,7 +445,7 @@ function ordenarInventario(inventario, orden) {
     });
 }
 
-async function sincronizarProductosDesdeBackend() {
+export async function sincronizarProductosDesdeBackend() {
     try {
         const response = await fetch("https://gestorinventory-backend-production.up.railway.app/productos/sincronizar", {
             method: "POST",
