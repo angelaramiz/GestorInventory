@@ -1,7 +1,7 @@
 // Funciones de base de datos
 // impoetaciones 
 import { mostrarMensaje, mostrarResultadoCarga } from './logs.js';
-import {sanitizarProducto} from './sanitizacion.js';
+import { sanitizarProducto } from './sanitizacion.js';
 
 // variables globales
 export let db;
@@ -72,7 +72,7 @@ export function inicializarDBInventario() {
 
         request.onupgradeneeded = event => {
             dbInventario = event.target.result;
-            
+
             // Si existe el almacén anterior, lo eliminamos
             if (dbInventario.objectStoreNames.contains("inventario")) {
                 dbInventario.deleteObjectStore("inventario");
@@ -94,7 +94,7 @@ export function inicializarDBInventario() {
             objectStore.createIndex("cantidad", "cantidad", { unique: false });
             objectStore.createIndex("fechaCaducidad", "fechaCaducidad", { unique: false });
             objectStore.createIndex("comentarios", "comentarios", { unique: false });
-            
+
             // Crear índice compuesto para código y lote
             objectStore.createIndex("codigo_lote", ["codigo", "lote"], { unique: true });
 
@@ -228,7 +228,7 @@ export function descargarCSV() {
                 const fecha = new Date().toLocaleDateString('es-PE', { year: 'numeric', month: '2-digit', day: '2-digit' }).replaceAll('/', '-');
                 const nombreArchivo = `productos de ${fecha}.csv`;
                 link.setAttribute("href", url);
-                link.setAttribute("download",nombreArchivo);
+                link.setAttribute("download", nombreArchivo);
                 link.style.visibility = "hidden";
                 document.body.appendChild(link);
                 link.click();
@@ -410,7 +410,7 @@ function filtrarInventario(inventario, opciones) {
         const fechaCaducidad = new Date(item.fechaCaducidad);
         const hoy = new Date();
 
-        switch(opciones.filtroCaducidad) {
+        switch (opciones.filtroCaducidad) {
             case 'proximos':
                 const treintaDias = new Date();
                 treintaDias.setDate(treintaDias.getDate() + 30);
@@ -419,7 +419,7 @@ function filtrarInventario(inventario, opciones) {
             case 'mes':
                 const mesSeleccionado = new Date(opciones.mesEspecifico);
                 return fechaCaducidad.getMonth() === mesSeleccionado.getMonth() &&
-                       fechaCaducidad.getFullYear() === mesSeleccionado.getFullYear();
+                    fechaCaducidad.getFullYear() === mesSeleccionado.getFullYear();
 
             default:
                 return true; // Mostrar todos
@@ -429,39 +429,63 @@ function filtrarInventario(inventario, opciones) {
 
 function ordenarInventario(inventario, orden) {
     return inventario.sort((a, b) => {
-        switch(orden) {
+        switch (orden) {
             case 'caducidad':
                 return new Date(a.fechaCaducidad) - new Date(b.fechaCaducidad);
-                
+
             case 'nombre':
                 return a.nombre.localeCompare(b.nombre);
-                
+
             case 'categoria':
                 return a.categoria.localeCompare(b.categoria);
-                
+
             default:
                 return 0;
         }
     });
 }
 
+async function sincronizarProductosDesdeBackend() {
+    try {
+        const response = await fetch("https://gestorinventory-backend-production.up.railway.app/productos/sincronizar", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+        });
+
+        const data = await response.json();
+        if (!data.success) throw new Error(data.error || "Error en la sincronización");
+
+        console.log("Productos sincronizados correctamente:", data);
+
+        // Guardar en IndexedDB
+        const transaction = db.transaction(["productos"], "readwrite");
+        const store = transaction.objectStore("productos");
+        data.productos.forEach(producto => store.put(producto));
+
+        console.log("Datos guardados en IndexedDB");
+    } catch (error) {
+        console.error("Error al sincronizar desde el backend:", error);
+    }
+}
+
+
 // Función para cargar datos en la tabla de la página de archivos
 export function cargarDatosEnTabla() {
     const tbody = document.getElementById("databaseBody");
     if (!tbody) {
-        console.log("Elemento 'databaseBody' no encontrado. Posiblemente no estamos en la página correcta.");
-        return; // Salir de la función si el elemento no existe
+        console.log("Elemento 'databaseBody' no encontrado.");
+        return;
     }
 
     const transaction = db.transaction(["productos"], "readonly");
     const objectStore = transaction.objectStore("productos");
     const request = objectStore.getAll();
 
-    request.onsuccess = function(event) {
+    request.onsuccess = function (event) {
         const productos = event.target.result;
-        tbody.innerHTML = ""; // Limpiar la tabla antes de cargar nuevos datos
+        tbody.innerHTML = ""; // Limpiar tabla
 
-        productos.forEach(function(producto) {
+        productos.forEach(function (producto) {
             const row = tbody.insertRow();
             row.insertCell().textContent = producto.codigo;
             row.insertCell().textContent = producto.nombre;
@@ -471,11 +495,11 @@ export function cargarDatosEnTabla() {
         });
     };
 
-    request.onerror = function(event) {
+    request.onerror = function (event) {
         console.error("Error al cargar datos en la tabla:", event.target.error);
-        mostrarMensaje("Error al cargar los datos de la base de datos", "error");
     };
 }
+
 
 //  Función para cargar  datos en la tabla de la página de archivos
 export function cargarDatosInventarioEnTablaPlantilla() {

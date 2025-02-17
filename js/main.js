@@ -1,18 +1,18 @@
 // Importaciones
-import { db, dbInventario, inicializarDB, inicializarDBInventario, cargarCSV, descargarCSV, cargarDatosEnTabla, cargarDatosInventarioEnTablaPlantilla, resetearBaseDeDatos, generarPlantillaInventario, descargarInventarioPDF, descargarInventarioCSV } from './db-operations.js';
+import { db, dbInventario, inicializarDB, inicializarDBInventario, cargarCSV, descargarCSV, cargarDatosEnTabla, cargarDatosInventarioEnTablaPlantilla, resetearBaseDeDatos, generarPlantillaInventario, descargarInventarioPDF, descargarInventarioCSV,sincronizarProductosDesdeBackend } from './db-operations.js';
 import { mostrarMensaje } from './logs.js';
 import { agregarProducto, buscarProducto, buscarProductoParaEditar, buscarProductoInventario, guardarCambios, eliminarProducto, guardarInventario } from './product-operations.js';
-import { toggleEscaner, detenerEscaner} from './scanner.js';
+import { toggleEscaner, detenerEscaner } from './scanner.js';
 
 // Función de inicialización
 async function init() {
     try {
         await inicializarDB();
         await inicializarDBInventario();
-        
+
         // Solo inicializamos el escáner si estamos en una página que lo usa
         if (document.getElementById('scanner-container')) {
-            
+
         }
 
         // Event listeners para los formularios
@@ -23,14 +23,14 @@ async function init() {
 
         // Event listeners para los botones de escaneo
         const botonesEscanear = document.querySelectorAll('[id^="escanearBtn"]');
-            botonesEscanear.forEach(boton => {
-                boton.addEventListener("click", function() {
-                    const inputId = this.id.replace('escanearBtn', '');
-                    const targetInputId = `codigo${inputId}`;
-                    console.log('Iniciando escaneo para:', targetInputId); // Debug
-                    toggleEscaner(targetInputId);
-                });
+        botonesEscanear.forEach(boton => {
+            boton.addEventListener("click", function () {
+                const inputId = this.id.replace('escanearBtn', '');
+                const targetInputId = `codigo${inputId}`;
+                console.log('Iniciando escaneo para:', targetInputId); // Debug
+                toggleEscaner(targetInputId);
             });
+        });
 
         // Event listeners para los botones de búsqueda
         const botonBuscarConsulta = document.getElementById("buscarConsulta");
@@ -94,18 +94,21 @@ async function init() {
 
         // Event listener para el botón de cerrar escáner
         const cerrarEscanerBtn = document.getElementById('cerrarEscaner');
-            if (cerrarEscanerBtn) {
-                cerrarEscanerBtn.addEventListener('click', () => {
-                    console.log('Cerrando escáner'); // Debug
-                    detenerEscaner();
-                });
-            }
+        if (cerrarEscanerBtn) {
+            cerrarEscanerBtn.addEventListener('click', () => {
+                console.log('Cerrando escáner'); // Debug
+                detenerEscaner();
+            });
+        }
 
         const botonBuscarInventario = document.getElementById("buscarInventario");
         if (botonBuscarInventario) {
             botonBuscarInventario.addEventListener("click", buscarProductoInventario);
         }
-        
+        document.getElementById("sync-btn").addEventListener("click", async () => {
+            await sincronizarProductosDesdeBackend();
+            cargarDatosEnTabla(); // Actualizar vista después de sincronizar
+        });
     } catch (error) {
         console.error("Error initializing the application:", error);
         mostrarMensaje("Error al inicializar la aplicación. Por favor, recargue la página.", "error");
