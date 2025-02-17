@@ -17,7 +17,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const data = await response.json();
             if (data.success) {
                 mostrarMensaje('Inicio de sesión exitoso', 'exito');
-                window.location.href = './plantillas/index.html';
+                window.location.href = './plantillas/main.html';
             } else {
                 mostrarMensaje(data.error, 'error');
             }
