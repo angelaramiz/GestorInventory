@@ -10,15 +10,15 @@ export let dbInventario;
 const dbName = "ProductosDB";
 const dbVersion = 1;
 // 
-export async function obtenerProductos() {
-    try {
-        const response = await fetch("https://gestorinventory-backend-production.up.railway.app/productos");
-        const productos = await response.json();
-        return productos;
-    } catch (error) {
-        mostrarMensaje(`Error al obtener productos: ${error.message}`, "error");
-    }
-}
+// export async function obtenerProductos() {
+//     try {
+//         const response = await fetch("https://gestorinventory-backend-production.up.railway.app/productos");
+//         const productos = await response.json();
+//         return productos;
+//     } catch (error) {
+//         mostrarMensaje(`Error al obtener productos: ${error.message}`, "error");
+//     }
+// }
 
 // Inicialización de la base de datos
 export function inicializarDB() {
