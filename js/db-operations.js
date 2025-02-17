@@ -455,16 +455,16 @@ export async function sincronizarProductosDesdeBackend() {
         const data = await response.json();
         if (!data.success) throw new Error(data.error || "Error en la sincronización");
 
-        console.log("Productos sincronizados correctamente:", data);
+        mostrarMensaje("Productos sincronizados correctamente:", "exito");
 
         // Guardar en IndexedDB
         const transaction = db.transaction(["productos"], "readwrite");
         const store = transaction.objectStore("productos");
         data.productos.forEach(producto => store.put(producto));
 
-        console.log("Datos guardados en IndexedDB");
+        mostrarMensaje("Datos guardados en IndexedDB", "exito");
     } catch (error) {
-        console.error("Error al sincronizar desde el backend:", error);
+        mostrarMensaje("Error al sincronizar desde el backend:", error);
     }
 }
 
@@ -496,7 +496,7 @@ export function cargarDatosEnTabla() {
     };
 
     request.onerror = function (event) {
-        console.error("Error al cargar datos en la tabla:", event.target.error);
+        mostrarMensaje("Error al cargar datos en la tabla:", event.target.error);
     };
 }
 
