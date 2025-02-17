@@ -105,10 +105,15 @@ async function init() {
         if (botonBuscarInventario) {
             botonBuscarInventario.addEventListener("click", buscarProductoInventario);
         }
-        document.getElementById("sync-btn").addEventListener("click", async () => {
-            await sincronizarProductosDesdeBackend();
-            cargarDatosEnTabla(); // Actualizar vista después de sincronizar
-        });
+        if (window.location.pathname.includes("archivos.html")) {
+            const botonSincronizar = document.getElementById("sync-btn");
+            if (botonSincronizar) {
+                botonSincronizar.addEventListener("click", async () => {
+                    await sincronizarProductosDesdeBackend();
+                    cargarDatosEnTabla();
+                });
+            }
+        }
     } catch (error) {
         console.error("Error initializing the application:", error);
         mostrarMensaje("Error al inicializar la aplicación. Por favor, recargue la página.", "error");
