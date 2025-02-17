@@ -8,14 +8,18 @@ document.addEventListener('DOMContentLoaded', () => {
             const email = document.getElementById('email').value;
             const password = document.getElementById('password').value;
 
-            const response = await fetch('https://gestorinventory-backend-production.up.railway.app/productos/login', {
+            const response = await fetch('.../productos/login', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ email, password })
             });
 
             const data = await response.json();
+            
             if (data.success) {
+                // Guardar token JWT
+                localStorage.setItem('supabase.auth.token', data.user.access_token); // <-- Línea clave
+                
                 mostrarMensaje('Inicio de sesión exitoso', 'exito');
                 window.location.href = './plantillas/main.html';
             } else {

@@ -447,24 +447,29 @@ function ordenarInventario(inventario, orden) {
 
 export async function sincronizarProductosDesdeBackend() {
     try {
+        // Obtener el token del usuario autenticado
+        const token = localStorage.getItem('supabase.auth.token'); // Asegúrate de guardar el token al iniciar sesión
+
         const response = await fetch("https://gestorinventory-backend-production.up.railway.app/productos/sincronizar", {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
+            headers: { 
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${token}` // Agregar el token JWT
+            },
         });
 
         const data = await response.json();
-        if (!data.success) throw new Error(data.error || "Error en la sincronización");
+        if (!response.ok) throw new Error(data.error || "Error en la sincronización");
 
-        mostrarMensaje("Productos sincronizados correctamente:", "exito");
+        mostrarMensaje("Productos sincronizados correctamente", "exito");
 
         // Guardar en IndexedDB
         const transaction = db.transaction(["productos"], "readwrite");
         const store = transaction.objectStore("productos");
         data.productos.forEach(producto => store.put(producto));
 
-        mostrarMensaje("Datos guardados en IndexedDB", "exito");
     } catch (error) {
-        mostrarMensaje("Error al sincronizar desde el backend:", error);
+        mostrarMensaje(`Error al sincronizar: ${error.message}`, "error");
     }
 }
 
