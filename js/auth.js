@@ -31,6 +31,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 e.preventDefault();
     
                 // Obtener los valores del formulario
+                const nombre = document.getElementById('nombre').value; 
                 const email = document.getElementById('email').value;
                 const password = document.getElementById('password').value;
                 const confirmPassword = document.getElementById('confirmPassword').value;
@@ -45,7 +46,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const response = await fetch('https://gestorinventory-backend-production.up.railway.app/registro', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ email, password })
+                    body: JSON.stringify({ nombre, email, password })
                 });
     
                 const data = await response.json();
