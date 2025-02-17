@@ -357,93 +357,269 @@ export function limpiarFormularioInventario() {
         document.getElementById("fechaCaducidad").value = "";
     }
     if (document.getElementById("comentarios")) {
-        document.getElementById("comentarios").value = "";
+        document.getElementById("comentario// En js/product-operations.js
+export async function guardarInventario() {
+    const codigo = document.getElementById("codigo").value;
+    const lote = document.getElementById("loteInventario")?.value || "1";
+    const cantidad = document.getElementById("cantidad").value;
+    const fechaCaducidad = document.getElementById("fechaCaducidad").value;
+    const comentarios = document.getElementById("comentarios").value;
+
+    try {
+        // Validación básica
+        if (!codigo || !cantidad) {
+            mostrarMensaje("Código y cantidad son campos obligatorios", "error");
+            return;
+        }
+
+        // Obtener datos del producto
+        const producto = await new Promise((resolve, reject) => {
+            const transaction = db.transaction(["productos"], "readonly");
+            const objectStore = transaction.objectStore("productos");
+            const request = objectStore.get(codigo);
+
+            request.onsuccess = () => resolve(request.result);
+            request.onerror = () => {
+                mostrarMensaje("Error al obtener el producto", "error");
+                reject("Error en IndexedDB");
+            };
+        });
+
+        if (!producto) {
+            mostrarMensaje("Producto no encontrado en la base de datos", "error");
+            return;
+        }
+
+        // Construir objeto de inventario
+        const inventarioData = {
+            id: `${codigo}-${lote}`,
+            codigo: producto.codigo,
+            nombre: producto.nombre,
+            categoria: producto.categoria,
+            marca: producto.marca,
+            lote: lote,
+            tipoQuantidad: producto.unidad || "Pz",
+            cantidad: parseInt(cantidad),
+            fechaCaducidad: new Date(fechaCaducidad).toISOString(),
+            comentarios: comentarios
+        };
+
+        // Guardar en IndexedDB
+        await new Promise((resolve, reject) => {
+            const transaction = dbInventario.transaction(["inventario"], "readwrite");
+            const objectStore = transaction.objectStore("inventario");
+            const request = objectStore.put(inventarioData);
+
+            request.onsuccess = () => resolve();
+            request.onerror = (e) => {
+                mostrarMensaje("Error al guardar localmente", "error");
+                reject(e.target.error);
+            };
+        });
+
+        // Sincronizar con Supabase
+        const token = localStorage.getItem('supabase.auth.token');
+        if (!token) {
+            mostrarMensaje("La sesión ha expirado. Por favor, inicia sesión nuevamente", "error");
+            return;
+        }
+
+        const supabaseResponse = await fetch(
+            'https://gestorinventory-backend-production.up.railway.app/productos/inventario',
+            {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({
+                    ...inventarioData,
+                    usuario_id: (await supabase.auth.getUser()).data.user.id
+                })
+            }
+        );
+
+        if (!supabaseResponse.ok) {
+            const errorData = await supabaseResponse.json();
+            mostrarMensaje(
+                `Error de sincronización: ${errorData.error || "Contacta al soporte técnico"}`,
+                "advertencia",
+                { timer: 3000 }
+            );
+            return;
+        }
+
+        // Éxito completo
+        mostrarMensaje(
+            "Inventario guardado y sincronizado correctamente ✓",
+            "exito",
+            { timer: 2000, showConfirmButton: false }
+        );
+        limpiarFormularioInventario();
+
+    } catch (error) {
+        console.error('Error en guardarInventario:', error);
+        
+        // Manejo específico de errores de sincronización
+        if (error.message.includes("servidor") || error.message.includes("sincronización")) {
+            mostrarMensaje(
+                "Datos guardados localmente. Se sincronizarán cuando recuperes conexión",
+                "advertencia",
+                { timer: 4000 }
+            );
+        }
+
+        // Mantener datos locales si es error de servidor
+        if (!error.message.includes("IndexedDB")) return;
+
+        // Revertir IndexedDB solo si el error fue local
+        try {
+            const transaction = dbInventario.transaction(["inventario"], "readwrite");
+            const objectStore = transaction.objectStore("inventario");
+            await objectStore.delete(`${codigo}-${lote}`);
+        } catch (dbError) {
+            mostrarMensaje(
+                "Error crítico: Contacta al soporte técnico",
+                "error",
+                { timer: 5000 }
+            );
+        }
+    }
+}s").value = "";
     }
     if (document.getElementById("datosInventario")) {
         document.getElementById("datosInventario").style.display = "none";
     }
 }
 // funcion para guardar productos en la base de datos para inventariar
-// Actualizar la función guardarInventario para manejar lotes
-export function guardarInventario() {
+// Actualizar la función guardarInventario para manejar lote
+export async function guardarInventario() {
     const codigo = document.getElementById("codigo").value;
     const lote = document.getElementById("loteInventario")?.value || "1";
-    const transaction = db.transaction(["productos"], "readonly");
-    const objectStore = transaction.objectStore("productos");
-    const request = objectStore.get(codigo);
+    const cantidad = document.getElementById("cantidad").value;
+    const fechaCaducidad = document.getElementById("fechaCaducidad").value;
+    const comentarios = document.getElementById("comentarios").value;
 
-    request.onsuccess = event => {
-        const producto = event.target.result;
-        if (producto) {
-            // Obtener el valor de 'unidad' del producto
-            const tipoCantidadPorDefecto = producto.unidad || "Pz"; // Valor por defecto si no hay unidad
-
-            // Crear el objeto de inventario
-            const inventarioData = {
-                id: `${codigo}-${lote}`, // ID único combinando código y lote
-                codigo: producto.codigo,
-                nombre: producto.nombre,
-                categoria: producto.categoria,
-                marca: producto.marca,
-                lote: lote,
-                tipoQuantidad: producto.unidad || "Pz", // Valor por defecto si no hay unidad
-                cantidad: document.getElementById("cantidad").value,
-                fechaCaducidad: document.getElementById("fechaCaducidad").value,
-                comentarios: document.getElementById("comentarios").value
-            };
-
-            // Guardar en la base de datos de inventario
-            const inventarioTransaction = dbInventario.transaction(["inventario"], "readwrite");
-            const inventarioObjectStore = inventarioTransaction.objectStore("inventario");
-            const addRequest = inventarioObjectStore.put(inventarioData);
-            if (!document.getElementById("datosInventario").style.display === "block") {
-                console.warn("El formulario de inventario no está visible.");
-                return;
-            }
-
-
-            addRequest.onsuccess = () => {
-                Swal.fire({
-                    title: "Éxito",
-                    text: `Inventario guardado correctamente (Lote #${lote})`,
-                    icon: "success",
-                    timer: 1500,
-                    showConfirmButton: false
-                });
-                limpiarFormularioInventario();
-            };
-
-            addRequest.onerror = error => {
-                console.error("Error al guardar el inventario:", error);
-                Swal.fire({
-                    title: "Error",
-                    text: "Error al guardar el inventario",
-                    icon: "error",
-                    timer: 1500,
-                    showConfirmButton: false
-                });
-            };
-        } else {
-            Swal.fire({
-                title: "Error",
-                text: "Producto no encontrado",
-                icon: "error",
-                timer: 1500,
-                showConfirmButton: false
-            });
+    try {
+        // Validación básica
+        if (!codigo || !cantidad) {
+            mostrarMensaje("Código y cantidad son campos obligatorios", "error");
+            return;
         }
-    };
 
-    request.onerror = error => {
-        console.error("Error al obtener el producto:", error);
-        Swal.fire({
-            title: "Error",
-            text: "Error al obtener el producto",
-            icon: "error",
-            timer: 1500,
-            showConfirmButton: false
+        // Obtener datos del producto
+        const producto = await new Promise((resolve, reject) => {
+            const transaction = db.transaction(["productos"], "readonly");
+            const objectStore = transaction.objectStore("productos");
+            const request = objectStore.get(codigo);
+
+            request.onsuccess = () => resolve(request.result);
+            request.onerror = () => {
+                mostrarMensaje("Error al obtener el producto", "error");
+                reject("Error en IndexedDB");
+            };
         });
-    };
+
+        if (!producto) {
+            mostrarMensaje("Producto no encontrado en la base de datos", "error");
+            return;
+        }
+
+        // Construir objeto de inventario
+        const inventarioData = {
+            id: `${codigo}-${lote}`,
+            codigo: producto.codigo,
+            nombre: producto.nombre,
+            categoria: producto.categoria,
+            marca: producto.marca,
+            lote: lote,
+            tipoQuantidad: producto.unidad || "Pz",
+            cantidad: parseInt(cantidad),
+            fechaCaducidad: new Date(fechaCaducidad).toISOString(),
+            comentarios: comentarios
+        };
+
+        // Guardar en IndexedDB
+        await new Promise((resolve, reject) => {
+            const transaction = dbInventario.transaction(["inventario"], "readwrite");
+            const objectStore = transaction.objectStore("inventario");
+            const request = objectStore.put(inventarioData);
+
+            request.onsuccess = () => resolve();
+            request.onerror = (e) => {
+                mostrarMensaje("Error al guardar localmente", "error");
+                reject(e.target.error);
+            };
+        });
+
+        // Sincronizar con Supabase
+        const token = localStorage.getItem('supabase.auth.token');
+        if (!token) {
+            mostrarMensaje("La sesión ha expirado. Por favor, inicia sesión nuevamente", "error");
+            return;
+        }
+
+        const supabaseResponse = await fetch(
+            'https://gestorinventory-backend-production.up.railway.app/productos/inventario',
+            {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({
+                    ...inventarioData,
+                    usuario_id: (await supabase.auth.getUser()).data.user.id
+                })
+            }
+        );
+
+        if (!supabaseResponse.ok) {
+            const errorData = await supabaseResponse.json();
+            mostrarMensaje(
+                `Error de sincronización: ${errorData.error || "Contacta al soporte técnico"}`,
+                "advertencia",
+                { timer: 3000 }
+            );
+            return;
+        }
+
+        // Éxito completo
+        mostrarMensaje(
+            "Inventario guardado y sincronizado correctamente ✓",
+            "exito",
+            { timer: 2000, showConfirmButton: false }
+        );
+        limpiarFormularioInventario();
+
+    } catch (error) {
+        console.error('Error en guardarInventario:', error);
+        
+        // Manejo específico de errores de sincronización
+        if (error.message.includes("servidor") || error.message.includes("sincronización")) {
+            mostrarMensaje(
+                "Datos guardados localmente. Se sincronizarán cuando recuperes conexión",
+                "advertencia",
+                { timer: 4000 }
+            );
+        }
+
+        // Mantener datos locales si es error de servidor
+        if (!error.message.includes("IndexedDB")) return;
+
+        // Revertir IndexedDB solo si el error fue local
+        try {
+            const transaction = dbInventario.transaction(["inventario"], "readwrite");
+            const objectStore = transaction.objectStore("inventario");
+            await objectStore.delete(`${codigo}-${lote}`);
+        } catch (dbError) {
+            mostrarMensaje(
+                "Error crítico: Contacta al soporte técnico",
+                "error",
+                { timer: 5000 }
+            );
+        }
+    }
 }
 
 function agregarNuevoProductoDesdeInventario(codigo) {
