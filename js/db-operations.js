@@ -474,7 +474,26 @@ export async function sincronizarProductosDesdeBackend() {
         // Actualizar IndexedDB
         const transaction = db.transaction(["productos"], "readwrite");
         const store = transaction.objectStore("productos");
-        data.productos.forEach(producto => store.put(producto));
+
+        // Verificar si cada producto ya existe antes de agregarlo o actualizarlo
+        for (const producto of data.productos) {
+            const request = store.get(producto.codigo); // Buscar el producto por su código
+            request.onsuccess = (e) => {
+                const productoExistente = e.target.result;
+                if (!productoExistente) {
+                    // Si el producto no existe, lo agregamos
+                    store.add(producto);
+                } else {
+                    // Si el producto existe, lo actualizamos solo si es necesario
+                    if (JSON.stringify(productoExistente) !== JSON.stringify(producto)) {
+                        store.put(producto);
+                    }
+                }
+            };
+            request.onerror = (e) => {
+                console.error("Error al buscar producto:", e.target.error);
+            };
+        }
 
         mostrarMensaje("Sincronización exitosa 🎉", "exito");
         return true;
