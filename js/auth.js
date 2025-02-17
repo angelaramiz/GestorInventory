@@ -17,7 +17,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const data = await response.json();
             if (data.success) {
                 mostrarMensaje('Inicio de sesión exitoso', 'exito');
-                window.location.href = '../index.html';
+                window.location.href = './plantillas/index.html';
             } else {
                 mostrarMensaje(data.error, 'error');
             }
@@ -59,7 +59,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (data.success) {
                     mostrarMensaje('Registro exitoso. Redirigiendo...', 'exito');
                     setTimeout(() => {
-                        window.location.href = 'login.html'; // Redirigir al login después del registro
+                        window.location.href = './index.html'; // Redirigir al login después del registro
                     }, 2000);
                 } else {
                     mostrarMensaje(data.error || 'Error al registrar el usuario', 'error');
