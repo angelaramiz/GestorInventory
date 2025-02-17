@@ -446,35 +446,43 @@ function ordenarInventario(inventario, orden) {
 }
 
 // En js/db-operations.js
+// Versión corregida:
 export async function sincronizarProductosDesdeBackend() {
     try {
         const token = localStorage.getItem('supabase.auth.token');
+        if (!token) {
+            mostrarMensaje("Debes iniciar sesión para sincronizar", "error");
+            return;
+        }
 
         const response = await fetch("https://gestorinventory-backend-production.up.railway.app/productos/sincronizar", {
             method: "POST",
-            headers: {
+            headers: { 
                 "Content-Type": "application/json",
                 "Authorization": `Bearer ${token}`
             },
         });
 
-        const data = await response.json();
-
+        // Manejar errores HTTP (ej: 404, 500)
         if (!response.ok) {
-            throw new Error(data.error || "Error en la sincronización");
+            const errorText = await response.text();
+            throw new Error(`Error ${response.status}: ${errorText}`);
         }
 
-        // Actualizar IndexedDB con los datos devueltos
+        const data = await response.json();
+        
+        // Actualizar IndexedDB
         const transaction = db.transaction(["productos"], "readwrite");
         const store = transaction.objectStore("productos");
         data.productos.forEach(producto => store.put(producto));
 
-        mostrarMensaje("Productos sincronizados correctamente", "exito");
-        cargarDatosEnTabla();
+        mostrarMensaje("Sincronización exitosa 🎉", "exito");
+        return true;
 
     } catch (error) {
         console.error("Error de sincronización:", error);
-        mostrarMensaje(`Error al sincronizar: ${error.message}`, "error");
+        mostrarMensaje(`Falló la sincronización: ${error.message}`, "error");
+        return false;
     }
 }
 

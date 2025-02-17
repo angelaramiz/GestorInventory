@@ -105,7 +105,10 @@ async function init() {
         if (botonBuscarInventario) {
             botonBuscarInventario.addEventListener("click", buscarProductoInventario);
         }
-        if (window.location.pathname.includes("archivos.html")) {
+        // Event listener para el botón de sincronizar
+        const esPaginaArchivos = window.location.href.includes('archivos.html'); // ✅
+
+        if (esPaginaArchivos) {
             const botonSincronizar = document.getElementById("sync-btn");
             if (botonSincronizar) {
                 botonSincronizar.addEventListener("click", async () => {
