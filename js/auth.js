@@ -8,7 +8,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const email = document.getElementById('email').value;
             const password = document.getElementById('password').value;
 
-            const response = await fetch('https://gestorinventory-backend-production.up.railway.app/productos/login', {
+            const response = await fetch('https://gestorinventory-backend-production.up.railway.app/login', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ email, password })
@@ -47,7 +47,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
                 console.log({ nombre, email, password });
                 // Enviar los datos al backend
-                const response = await fetch('https://gestorinventory-backend-production.up.railway.app/productos/registro', {
+                const response = await fetch('https://gestorinventory-backend-production.up.railway.app/registro', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ nombre, email, password })
