@@ -9,6 +9,7 @@ export let dbInventario;
 // Nombre y versión de la base de datos
 const dbName = "ProductosDB";
 const dbVersion = 1;
+let syncQueue = [];
 // 
 // export async function obtenerProductos() {
 //     try {
@@ -19,7 +20,35 @@ const dbVersion = 1;
 //         mostrarMensaje(`Error al obtener productos: ${error.message}`, "error");
 //     }
 // }
+// Nueva cola de sincronizació
+export function agregarAColaSincronizacion(data) {
+    syncQueue.push(data);
+    localStorage.setItem('syncQueue', JSON.stringify(syncQueue));
+}
 
+// Llamar esto cuando se detecte conexión
+export async function procesarColaSincronizacion() {
+    if (!navigator.onLine) return;
+
+    const queue = JSON.parse(localStorage.getItem('syncQueue') || []);
+    
+    while (queue.length > 0) {
+        const item = queue.shift();
+        try {
+            await fetch('https://tu-backend.com/productos/inventario', {
+                method: 'POST',
+                // ... mismos headers y body
+            });
+            localStorage.setItem('syncQueue', JSON.stringify(queue));
+        } catch (error) {
+            console.error('Error en cola:', error);
+            break;
+        }
+    }
+}
+
+// Escuchar eventos de conexión
+window.addEventListener('online', procesarColaSincronizacion);
 // Inicialización de la base de datos
 export function inicializarDB() {
     return new Promise((resolve, reject) => {
