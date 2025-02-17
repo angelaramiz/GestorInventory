@@ -112,6 +112,7 @@ async function init() {
             const botonSincronizar = document.getElementById("sync-btn");
             if (botonSincronizar) {
                 botonSincronizar.addEventListener("click", async () => {
+                    mostrarMensaje("Sincronizando productos...", "info");
                     await sincronizarProductosDesdeBackend();
                     cargarDatosEnTabla();
                 });
