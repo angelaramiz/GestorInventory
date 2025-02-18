@@ -489,22 +489,7 @@ function ordenarInventario(inventario, orden) {
 // Versión corregida:
 export async function sincronizarProductosDesdeBackend() {
     try {
-        const tokenData = localStorage.getItem('supabase.auth.token');
-        if (!tokenData) {
-            mostrarMensaje("Debes iniciar sesión para sincronizar", "error");
-            return;
-        }
-
-        let token;
-        try {
-            const parsedTokenData = JSON.parse(tokenData);
-            token = parsedTokenData?.access_token || parsedTokenData?.currentSession?.access_token;
-        } catch (error) {
-            console.error("Error al procesar el token de autenticación:", error);
-            mostrarMensaje("Error al procesar el token de autenticación", "error");
-            return;
-        }
-
+        const token = localStorage.getItem('supabase.auth.token');
         if (!token) {
             mostrarMensaje("Debes iniciar sesión para sincronizar", "error");
             return;
@@ -525,6 +510,11 @@ export async function sincronizarProductosDesdeBackend() {
         }
 
         const data = await response.json();
+
+        // Verificar que data.productos sea un array
+        if (!Array.isArray(data.productos)) {
+            throw new Error("La respuesta del servidor no contiene un array de productos");
+        }
         
         // Actualizar IndexedDB
         const transaction = db.transaction(["productos"], "readwrite");

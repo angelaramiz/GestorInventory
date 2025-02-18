@@ -19,12 +19,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (data.success) {
                 // Guardar token JWT
-                localStorage.setItem('supabase.auth.token', data.access_token); // ✅ Guarda el token JWT correctamente
-                localStorage.setItem('supabase.auth.refresh', data.refresh_token); // ✅ Comillas corregidas
-                localStorage.setItem('usuario_id', data.user.id); // ✅ Guarda el ID del usuario
+                localStorage.setItem('supabase.auth.token', data.user.access_token); // ✅ Guarda solo el token
+                localStorage.setItem('supabase.auth.refresh', data.user.refresh_token); // ✅ Guarda el token de refresco
+                localStorage.setItem('usuario_id', data.user.user.id); // ✅ Guarda el ID del usuario
 
                 mostrarMensaje('Inicio de sesión exitoso', 'exito');
-                window.location.href = './plantillas/main.html';
+                console.log('datos obtenidos', data.user.user.id);
+                setTimeout(() => {
+                    window.location.href = './plantillas/main.html'; // Redirigir al login después del registro
+                }, 5000);
             } else {
                 mostrarMensaje(data.error, 'error');
             }

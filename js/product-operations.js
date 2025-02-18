@@ -574,32 +574,54 @@ export function agregarProductoABaseDeDatos(producto) {
     };
 }
 // Función para buscar inventario en nueva base de datos
-export function buscarProductoInventario() {
+export async function buscarProductoInventario() {
     const codigo = document.getElementById("codigo").value;
+    const nombre = document.getElementById("nombreInventario").value;
+    const marca = document.getElementById("marcaInventario").value;
 
-    if (codigo.length === 4) {
-        buscarPorCodigoParcial(codigo, (resultados) => {
-            if (resultados.length === 1) {
-                mostrarFormularioInventario(resultados[0]);
-            } else {
-                mostrarResultadosInventario(resultados);
-            }
-        });
-        return;
-    }
-
-    const transaction = db.transaction(["productos"], "readonly");
-    const objectStore = transaction.objectStore("productos");
-    const request = objectStore.get(codigo);
-
-    request.onsuccess = event => {
-        if (event.target.result) {
-            mostrarFormularioInventario(event.target.result);
-        } else {
-            mostrarMensaje("Producto no encontrado", "error");
+    try {
+        // Si el usuario ingresa un código de 4 dígitos, buscar por coincidencias en códigos UPC-A
+        if (codigo.length === 4) {
+            buscarPorCodigoParcial(codigo, (resultados) => {
+                if (resultados.length === 0) {
+                    agregarNuevoProductoDesdeInventario(codigo);
+                } else {
+                    mostrarResultadosInventario(resultados);
+                }
+            });
+            return;  // Detener la ejecución aquí para evitar la búsqueda normal
         }
-    };
+
+        // Primero buscar en la base de datos de productos
+        const productosResultados = await buscarEnProductos(codigo, nombre, marca);
+        
+        if (productosResultados.length === 0) {
+            // Si no se encuentra el producto, preguntar si desea agregarlo
+            agregarNuevoProductoDesdeInventario(codigo);
+            return;
+        }
+
+        // Si encontramos productos, buscar en inventario
+        const inventarioResultados = await buscarEnInventario(codigo, nombre, marca);
+        
+        if (inventarioResultados.length > 0) {
+            // Si existe en inventario, mostrar modal con opciones
+            mostrarModalProductoExistente(productosResultados[0], inventarioResultados);
+        } else {
+            // Si no existe en inventario, mostrar resultados normales
+            mostrarResultadosInventario(productosResultados);
+        }
+    } catch (error) {
+        console.error("Error en la búsqueda:", error);
+        Swal.fire({
+            title: "Error",
+            text: "Error al buscar el producto",
+            icon: "error",
+            timer: 2000
+        });
+    }
 }
+
 // Función para buscar en la base de datos de productos
 function buscarEnProductos(codigo, nombre, marca) {
     return new Promise((resolve, reject) => {

@@ -6,11 +6,13 @@ import { iniciarEscaneoConModal,detenerEscaner } from "./scanner.js";
 
 // Función para mostrar mensajes con SweetAlert2 y mejoras visuales
 export function mostrarMensaje(mensaje, tipo, opciones = {}) {
-    const iconType = tipo === "exito" ? "success" : tipo;
+    const iconosValidos = ["success", "error", "warning", "info", "question"];
+    const icono = iconosValidos.includes(tipo) ? tipo : "info";
+
     const defaultOptions = {
         title: tipo.charAt(0).toUpperCase() + tipo.slice(1),
         text: mensaje,
-        icon: iconType,
+        icon: icono,
         timer: opciones.timer || 1000,
         showConfirmButton: opciones.showConfirmButton || false,
         allowOutsideClick: opciones.allowOutsideClick || false,
