@@ -264,7 +264,7 @@ export function validarCodigoUnico(codigo) {
 export async function guardarCambios() {
     try {
         const codigoAntiguo = document.getElementById("codigoEditar").getAttribute("data-codigo-original"); // Código original guardado
-        const codigoNuevo = document.getElementById("codigo").value; // Nuevo código ingresado por el usuario
+        const codigoNuevo = document.getElementById("codigoEditar").value; // Nuevo código ingresado por el usuario
         const nombre = document.getElementById("nombreEditar").value;
         const categoria = document.getElementById("categoriaEditar").value;
         const marca = document.getElementById("marcaEditar").value;
@@ -432,7 +432,7 @@ export async function guardarInventario() {
         // Sincronizar con Supabase
         const token = getToken();
         if (!token) {
-            window.location.href = './index.html'; // Redirigir al inicio de sesión
+            mostrarVentanaDinamica("La sesión ha expirado. Por favor, inicia sesión nuevamente.");
             return;
         }
 
@@ -453,8 +453,7 @@ export async function guardarInventario() {
 
         if (!supabaseResponse.ok) {
             if (supabaseResponse.status === 401) {
-                mostrarMensaje("La sesión ha expirado. Por favor, inicia sesión nuevamente", "error");
-                window.location.href = './index.html'; // Redirigir al inicio de sesión
+                mostrarVentanaDinamica("La sesión ha expirado. Por favor, inicia sesión nuevamente.");
             } else {
                 const errorData = await supabaseResponse.json();
                 mostrarMensaje(
@@ -502,6 +501,21 @@ export async function guardarInventario() {
             );
         }
     }
+}
+
+function mostrarVentanaDinamica(mensaje) {
+    Swal.fire({
+        title: 'Sesión Expirada',
+        text: mensaje,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: 'Iniciar Sesión',
+        cancelButtonText: 'Cancelar'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            window.location.href = '../index.html'; // Redirigir al inicio de sesión
+        }
+    });
 }
 
 function agregarNuevoProductoDesdeInventario(codigo) {
