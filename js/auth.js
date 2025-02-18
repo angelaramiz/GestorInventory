@@ -19,6 +19,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (data.success) {
                 // Guardar token JWT
                 localStorage.setItem('supabase.auth.token', data.user.access_token); // <-- Línea clave
+                localStorage.setItem('usuario_id', data.user.id); // Guarda el usuario_id
                 
                 mostrarMensaje('Inicio de sesión exitoso', 'exito');
                 window.location.href = './plantillas/main.html';
