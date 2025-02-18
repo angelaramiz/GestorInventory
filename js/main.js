@@ -111,11 +111,10 @@ async function init() {
         if (esPaginaArchivos) {
             const botonSincronizar = document.getElementById("sync-btn");
             if (botonSincronizar) {
-                botonSincronizar.addEventListener("click", async () => {
-                    mostrarMensaje("Sincronizando productos...", "info");
-                    await sincronizarProductosDesdeBackend();
-                    cargarDatosEnTabla();
-                });
+            botonSincronizar.addEventListener("click", async () => {
+                mostrarMensaje("Sincronizando productos...", "info");
+                await sincronizarProductosDesdeBackend();
+            });
             }
         }
     } catch (error) {

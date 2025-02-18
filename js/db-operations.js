@@ -11,15 +11,7 @@ const dbName = "ProductosDB";
 const dbVersion = 1;
 let syncQueue = [];
 // 
-// export async function obtenerProductos() {
-//     try {
-//         const response = await fetch("https://gestorinventory-backend-production.up.railway.app/productos");
-//         const productos = await response.json();
-//         return productos;
-//     } catch (error) {
-//         mostrarMensaje(`Error al obtener productos: ${error.message}`, "error");
-//     }
-// }
+
 // Nueva cola de sincronizació
 export function agregarAColaSincronizacion(data) {
     syncQueue.push(data);
@@ -499,7 +491,22 @@ function ordenarInventario(inventario, orden) {
 // Versión corregida:
 export async function sincronizarProductosDesdeBackend() {
     try {
-        const token = localStorage.getItem('supabase.auth.token');
+        const tokenData = localStorage.getItem('supabase.auth.token');
+        if (!tokenData) {
+            mostrarMensaje("Debes iniciar sesión para sincronizar", "error");
+            return;
+        }
+
+        let token;
+        try {
+            const parsedTokenData = JSON.parse(tokenData);
+            token = parsedTokenData?.access_token || parsedTokenData?.currentSession?.access_token;
+        } catch (error) {
+            console.error("Error al procesar el token de autenticación:", error);
+            mostrarMensaje("Error al procesar el token de autenticación", "error");
+            return;
+        }
+
         if (!token) {
             mostrarMensaje("Debes iniciar sesión para sincronizar", "error");
             return;
@@ -546,6 +553,10 @@ export async function sincronizarProductosDesdeBackend() {
         }
 
         mostrarMensaje("Sincronización exitosa 🎉", "exito");
+
+        // Llamar a cargarDatosEnTabla para actualizar la tabla en la interfaz
+        cargarDatosEnTabla();
+
         return true;
 
     } catch (error) {

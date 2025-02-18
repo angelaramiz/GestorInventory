@@ -1,4 +1,3 @@
-
 // importaciones 
 import { db, dbInventario } from './db-operations.js';
 import { mostrarMensaje } from './logs.js';
@@ -132,22 +131,6 @@ export function buscarPorCodigoParcial(codigoParcial, callback) {
         mostrarMensaje("Error al buscar en la base de datos", "error");
     };
 }
-
-// Funciones para agregar producto
-// export async function agregarProducto(codigo, nombre, categoria, marca, unidad) {
-//     try {
-//         const response = await fetch("https://gestorinventory-backend-production.up.railway.app/productos", {
-//             method: "POST",
-//             headers: { "Content-Type": "application/json" },
-//             body: JSON.stringify({ codigo, nombre, categoria, marca, unidad })
-//         });
-
-//         const data = await response.json();
-//         mostrarMensaje("Producto agregado:", data);
-//     } catch (error) {
-//         mostrarMensaje("Error al agregar producto:", error);
-//     }
-// }
 
 export function agregarProducto(evento) {
     evento.preventDefault();
@@ -446,7 +429,21 @@ export async function guardarInventario() {
         });
 
         // Sincronizar con Supabase
-        const token = localStorage.getItem('supabase.auth.token');
+        const tokenData = localStorage.getItem('supabase.auth.token');
+        if (!tokenData) {
+            mostrarMensaje("La sesión ha expirado. Por favor, inicia sesión nuevamente", "error");
+            return;
+        }
+
+        let token;
+        try {
+            const parsedTokenData = JSON.parse(tokenData);
+            token = parsedTokenData?.currentSession?.access_token;
+        } catch (error) {
+            mostrarMensaje("Error al procesar el token de autenticación", "error");
+            return;
+        }
+
         if (!token) {
             mostrarMensaje("La sesión ha expirado. Por favor, inicia sesión nuevamente", "error");
             return;
