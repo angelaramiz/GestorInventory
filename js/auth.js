@@ -15,20 +15,20 @@ document.addEventListener('DOMContentLoaded', () => {
             });
 
             const data = await response.json();
-
-            if (data.success && data.session) {
-                localStorage.setItem('supabase.auth.token', data.session.access_token);
-                localStorage.setItem('usuario_id', data.user.id); 
+            
+            if (data.success) {
+                // Guardar token JWT
+                localStorage.setItem('supabase.auth.token', JSON.stringify(data.user)); // Guardar el objeto completo
+                localStorage.setItem('usuario_id', data.user.id); // Guarda el usuario_id
                 
                 mostrarMensaje('Inicio de sesión exitoso', 'exito');
                 window.location.href = './plantillas/main.html';
             } else {
-                mostrarMensaje(data.error || 'Error en la autenticación', 'error');
+                mostrarMensaje(data.error, 'error');
             }
         });
     }
 });
-
 
 document.addEventListener('DOMContentLoaded', () => {
     const formRegistro = document.getElementById('formRegistro');
