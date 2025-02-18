@@ -1,7 +1,6 @@
 // Funciones de base de datos
 import { mostrarMensaje, mostrarResultadoCarga } from './logs.js';
 import { sanitizarProducto } from './sanitizacion.js';
-import { cargarDatosEnTabla, cargarDatosInventarioEnTablaPlantilla } from './product-operations.js';
 
 // variables globales
 export let db;
