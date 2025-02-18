@@ -15,12 +15,14 @@ document.addEventListener('DOMContentLoaded', () => {
             });
 
             const data = await response.json();
-            
+            console.log(`Respuesta del backend:`, data); // <-- Muestra en consola qué devuelve
+
             if (data.success) {
                 // Guardar token JWT
-                localStorage.setItem('supabase.auth.token', JSON.stringify(data.user)); // Guardar el objeto completo
-                localStorage.setItem('usuario_id', data.user.id); // Guarda el usuario_id
-                
+                localStorage.setItem('supabase.auth.token', data.access_token); // ✅ Guarda el token JWT correctamente
+                localStorage.setItem('supabase.auth.refresh', data.refresh_token); // ✅ Comillas corregidas
+                localStorage.setItem('usuario_id', data.user.id); // ✅ Guarda el ID del usuario
+
                 mostrarMensaje('Inicio de sesión exitoso', 'exito');
                 window.location.href = './plantillas/main.html';
             } else {
@@ -37,7 +39,7 @@ document.addEventListener('DOMContentLoaded', () => {
             e.preventDefault();
 
             // Obtener los valores del formulario
-            const nombre = document.getElementById('nombre').value; 
+            const nombre = document.getElementById('nombre').value;
             const email = document.getElementById('email').value;
             const password = document.getElementById('password').value;
             const confirmPassword = document.getElementById('confirmPassword').value;
@@ -121,20 +123,17 @@ function isTokenExpired(token) {
 }
 
 export function getToken() {
-    const tokenData = localStorage.getItem('supabase.auth.token');
-    if (!tokenData) return null;
+    const token = localStorage.getItem('supabase.auth.token');
+
+    if (!token) {
+        console.warn("No se encontró el token en localStorage.");
+        return null;
+    }
 
     try {
-        const parsedTokenData = JSON.parse(tokenData);
-        const token = parsedTokenData?.access_token || parsedTokenData?.currentSession?.access_token;
-        if (isTokenExpired(token)) {
-            mostrarMensaje("La sesión ha expirado. Por favor, inicia sesión nuevamente", "error");
-            return null;
-        }
-        return token;
+        return token; // Ya es una cadena, no es necesario hacer JSON.parse
     } catch (error) {
         console.error("Error al procesar el token de autenticación:", error);
-        mostrarMensaje("Error al procesar el token de autenticación", "error");
         return null;
     }
 }

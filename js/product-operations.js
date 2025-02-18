@@ -367,7 +367,7 @@ export function limpiarFormularioInventario() {
         document.getElementById("datosInventario").style.display = "none";
     }
 }
-                                
+
 // funcion para guardar productos en la base de datos para inventariar
 // Actualizar la función guardarInventario para manejar lote
 export async function guardarInventario() {
@@ -431,10 +431,7 @@ export async function guardarInventario() {
 
         // Sincronizar con Supabase
         const token = getToken();
-        if (!token) {
-            mostrarVentanaDinamica("La sesión ha expirado. Por favor, inicia sesión nuevamente.");
-            return;
-        }
+        console.log("Token enviado:", token); // 🛠 Verificar si el token es válido
 
         const supabaseResponse = await fetch(
             'https://gestorinventory-backend-production.up.railway.app/productos/inventario',
@@ -442,7 +439,7 @@ export async function guardarInventario() {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
+                    'Authorization': `Bearer ${token}` // Asegurar que se usa correctamente
                 },
                 body: JSON.stringify({
                     ...inventarioData,
@@ -475,7 +472,7 @@ export async function guardarInventario() {
 
     } catch (error) {
         console.error('Error en guardarInventario:', error);
-        
+
         // Manejo específico de errores de sincronización
         if (error.message.includes("servidor") || error.message.includes("sincronización")) {
             mostrarMensaje(
