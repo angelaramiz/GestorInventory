@@ -78,7 +78,34 @@ export function mostrarFormularioInventario(producto) {
 
     // Aquí puedes añadir lógica para cargar datos de inventario existentes si es necesario
 }
+export function mostrarResultadosEdicion(resultados) {
+    const resultadosDiv = document.createElement("div");
+    resultadosDiv.id = "resultadosEdicion";
+    resultadosDiv.innerHTML = "<h3>Seleccione un producto para editar:</h3>";
 
+    resultados.forEach(producto => {
+        const productoDiv = document.createElement("div");
+        productoDiv.classList.add("bg-white", "p-4", "mb-2", "cursor-pointer", "hover:bg-gray-100");
+        productoDiv.innerHTML = `
+            <p><strong>Código:</strong> ${producto.codigo}</p>
+            <p><strong>Nombre:</strong> ${producto.nombre}</p>
+            <p><strong>Marca:</strong> ${producto.marca}</p>
+        `;
+        productoDiv.addEventListener("click", () => {
+            llenarFormularioEdicion(producto);
+            document.body.removeChild(resultadosDiv);
+        });
+        resultadosDiv.appendChild(productoDiv);
+    });
+
+    // Si ya hay una lista de resultados en el DOM, eliminarla antes de agregar una nueva
+    const existente = document.getElementById("resultadosEdicion");
+    if (existente) {
+        existente.remove();
+    }
+
+    document.body.appendChild(resultadosDiv);
+}
 // 
 export function buscarPorCodigoParcial(codigoParcial, callback) {
     const transaction = db.transaction(["productos"], "readonly");
@@ -86,21 +113,31 @@ export function buscarPorCodigoParcial(codigoParcial, callback) {
     const request = objectStore.getAll();
 
     request.onsuccess = function (event) {
-        const productos = event.target.result;
-        const resultados = productos.filter(producto => producto.codigo.includes(codigoParcial));
+        const productos = event.target.result || [];
 
-        if (callback) {
-            callback(resultados);
+        // Convertir a string y filtrar por coincidencia
+        const resultados = productos.filter(producto => {
+            const codigo = producto.codigo.toString(); // Asegurar que siempre sea string
+            return codigo.includes(codigoParcial);
+        });
+
+        if (resultados.length > 0) {
+            if (callback) {
+                callback(resultados);
+            } else if (document.getElementById("resultados")) {
+                mostrarResultados(resultados);
+            } else {
+                console.warn("No hay contenedor de resultados disponible.");
+            }
         } else {
-            mostrarResultados(resultados);
+            mostrarMensaje(`No se encontraron productos con código parcial ${codigoParcial}`, "error");
         }
     };
 
-    request.onerror = function (event) {
+    request.onerror = function () {
         mostrarMensaje("Error al buscar en la base de datos", "error");
     };
 }
-
 
 // Funciones para agregar producto
 // export async function agregarProducto(codigo, nombre, categoria, marca, unidad) {
@@ -199,8 +236,10 @@ export function buscarProductoParaEditar() {
         buscarPorCodigoParcial(codigo, (resultados) => {
             if (resultados.length === 1) {
                 llenarFormularioEdicion(resultados[0]);
+            } else if (resultados.length > 1) {
+                mostrarResultadosEdicion(resultados);
             } else {
-                mostrarResultados(resultados);
+                mostrarMensaje("No se encontraron productos con ese código parcial", "error");
             }
         });
         return;
