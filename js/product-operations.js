@@ -462,7 +462,7 @@ export async function guardarInventario() {
                 },
                 body: JSON.stringify({
                     ...inventarioData,
-                    usuario_id: (await supabase.auth.getUser()).data.user.id
+                    usuario_id: localStorage.getItem('usuario_id')
                 })
             }
         );
