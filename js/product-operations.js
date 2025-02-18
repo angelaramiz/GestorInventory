@@ -357,7 +357,13 @@ export function limpiarFormularioInventario() {
         document.getElementById("fechaCaducidad").value = "";
     }
     if (document.getElementById("comentarios")) {
-        document.getElementById("comentario// En js/product-operations.js
+        document.getElementById("comentarios").value = "";
+    }
+    if (document.getElementById("datosInventario")) {
+        document.getElementById("datosInventario").style.display = "none";
+    }
+}
+                                
 export async function guardarInventario() {
     const codigo = document.getElementById("codigo").value;
     const lote = document.getElementById("loteInventario")?.value || "1";
