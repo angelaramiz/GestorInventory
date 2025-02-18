@@ -24,7 +24,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 localStorage.setItem('usuario_id', data.user.user.id); // ✅ Guarda el ID del usuario
 
                 mostrarMensaje('Inicio de sesión exitoso', 'exito');
-                console.log('datos obtenidos', data.user.user.id);
+                // console.log('datos obtenidos', data.user.user.id);
                 setTimeout(() => {
                     window.location.href = './plantillas/main.html'; // Redirigir al login después del registro
                 }, 1000);
