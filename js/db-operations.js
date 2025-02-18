@@ -124,7 +124,6 @@ export function inicializarDBInventario() {
     });
 }
 
-
 export function resetearBaseDeDatos(database, storeName) {
     const transaction = database.transaction([storeName], "readwrite");
     const objectStore = transaction.objectStore(storeName);
@@ -566,39 +565,6 @@ export async function sincronizarProductosDesdeBackend() {
     }
 }
 
-
-// Función para cargar datos en la tabla de la página de archivos
-export function cargarDatosEnTabla() {
-    const tbody = document.getElementById("databaseBody");
-    if (!tbody) {
-        console.log("Elemento 'databaseBody' no encontrado.");
-        return;
-    }
-
-    const transaction = db.transaction(["productos"], "readonly");
-    const objectStore = transaction.objectStore("productos");
-    const request = objectStore.getAll();
-
-    request.onsuccess = function (event) {
-        const productos = event.target.result;
-        tbody.innerHTML = ""; // Limpiar tabla
-
-        productos.forEach(function (producto) {
-            const row = tbody.insertRow();
-            row.insertCell().textContent = producto.codigo;
-            row.insertCell().textContent = producto.nombre;
-            row.insertCell().textContent = producto.categoria;
-            row.insertCell().textContent = producto.marca;
-            row.insertCell().textContent = producto.unidad;
-        });
-    };
-
-    request.onerror = function (event) {
-        mostrarMensaje("Error al cargar datos en la tabla:", event.target.error);
-    };
-}
-
-
 //  Función para cargar  datos en la tabla de la página de archivos
 export function cargarDatosInventarioEnTablaPlantilla() {
     const transaction = dbInventario.transaction(["inventario"], "readonly");
@@ -658,6 +624,37 @@ export function generarPlantillaInventario() {
             link.click();
             document.body.removeChild(link);
         }
+    };
+}
+
+// Función para cargar datos en la tabla de la página de archivos
+export function cargarDatosEnTabla() {
+    const tbody = document.getElementById("databaseBody");
+    if (!tbody) {
+        console.log("Elemento 'databaseBody' no encontrado.");
+        return;
+    }
+
+    const transaction = db.transaction(["productos"], "readonly");
+    const objectStore = transaction.objectStore("productos");
+    const request = objectStore.getAll();
+
+    request.onsuccess = function (event) {
+        const productos = event.target.result;
+        tbody.innerHTML = ""; // Limpiar tabla
+
+        productos.forEach(function (producto) {
+            const row = tbody.insertRow();
+            row.insertCell().textContent = producto.codigo;
+            row.insertCell().textContent = producto.nombre;
+            row.insertCell().textContent = producto.categoria;
+            row.insertCell().textContent = producto.marca;
+            row.insertCell().textContent = producto.unidad;
+        });
+    };
+
+    request.onerror = function (event) {
+        mostrarMensaje("Error al cargar datos en la tabla:", event.target.error);
     };
 }
 

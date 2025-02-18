@@ -77,7 +77,47 @@ document.addEventListener('DOMContentLoaded', () => {
 function isTokenExpired(token) {
     const payload = JSON.parse(atob(token.split('.')[1]));
     const expirationTime = payload.exp * 1000; // Convertir a milisegundos
-    return Date.now() > expirationTime;
+    if (Date.now() > expirationTime) {
+        // Mostrar ventana dinámica de inicio de sesión
+        Swal.fire({
+            title: 'Sesión expirada',
+            html: `
+                <p>Tu sesión ha expirado. Por favor, inicia sesión nuevamente.</p>
+                <form id="formLoginSwal">
+                    <input type="email" id="emailSwal" class="swal2-input" placeholder="Email" required>
+                    <input type="password" id="passwordSwal" class="swal2-input" placeholder="Contraseña" required>
+                </form>
+            `,
+            showCancelButton: false,
+            confirmButtonText: 'Iniciar sesión',
+            preConfirm: () => {
+                const email = document.getElementById('emailSwal').value;
+                const password = document.getElementById('passwordSwal').value;
+                return { email, password };
+            }
+        }).then(async (result) => {
+            if (result.isConfirmed) {
+                const { email, password } = result.value;
+                const response = await fetch('https://gestorinventory-backend-production.up.railway.app/productos/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password })
+                });
+
+                const data = await response.json();
+                if (data.success) {
+                    localStorage.setItem('supabase.auth.token', JSON.stringify(data.user));
+                    localStorage.setItem('usuario_id', data.user.id);
+                    mostrarMensaje('Inicio de sesión exitoso', 'exito');
+                    window.location.reload(); // Recargar la página para aplicar el nuevo token
+                } else {
+                    mostrarMensaje(data.error, 'error');
+                }
+            }
+        });
+        return true;
+    }
+    return false;
 }
 
 export function getToken() {
