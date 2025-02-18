@@ -27,7 +27,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 console.log('datos obtenidos', data.user.user.id);
                 setTimeout(() => {
                     window.location.href = './plantillas/main.html'; // Redirigir al login después del registro
-                }, 5000);
+                }, 1000);
             } else {
                 mostrarMensaje(data.error, 'error');
             }
