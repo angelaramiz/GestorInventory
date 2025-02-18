@@ -80,25 +80,19 @@ export function mostrarFormularioInventario(producto) {
 }
 
 // 
-export function buscarPorCodigoParcial(codigoParcial) {
+export function buscarPorCodigoParcial(codigoParcial, callback) {
     const transaction = db.transaction(["productos"], "readonly");
     const objectStore = transaction.objectStore("productos");
     const request = objectStore.getAll();
 
     request.onsuccess = function (event) {
         const productos = event.target.result;
+        const resultados = productos.filter(producto => producto.codigo.includes(codigoParcial));
 
-        // Filtrar productos cuyo código UPC-A contenga exactamente los 4 dígitos
-        const resultados = productos.filter(producto => {
-            const codigo = producto.codigo.toString();
-            return codigo.includes(codigoParcial);
-        });
-
-        if (resultados.length > 0) {
-            mostrarMensaje(`Se encontraron ${resultados.length} productos con código parcial ${codigoParcial}`, "exito");
-            mostrarResultados(resultados);
+        if (callback) {
+            callback(resultados);
         } else {
-            mostrarMensaje(`No se encontraron productos con código parcial ${codigoParcial}`, "error");
+            mostrarResultados(resultados);
         }
     };
 
@@ -200,45 +194,38 @@ export function buscarProducto() {
 // Funciones para edición de producto
 export function buscarProductoParaEditar() {
     const codigo = document.getElementById("codigoEditar").value;
-    const transaction = db.transaction(["productos"], "readonly");
-    const objectStore = transaction.objectStore("productos");
 
     if (codigo.length === 4) {
         buscarPorCodigoParcial(codigo, (resultados) => {
             if (resultados.length === 1) {
-                // Si solo hay un resultado, llenar el formulario de edición automáticamente
-                const producto = resultados[0];
-                document.getElementById("codigoEditar").value = producto.codigo;
-                document.getElementById("codigoEditar").setAttribute("data-codigo-original", producto.codigo); // Guardar el código original
-                document.getElementById("nombreEditar").value = producto.nombre;
-                document.getElementById("categoriaEditar").value = producto.categoria;
-                document.getElementById("marcaEditar").value = producto.marca;
-                document.getElementById("unidadEditar").value = producto.unidad;
-                document.getElementById("formularioEdicion").style.display = "block";
+                llenarFormularioEdicion(resultados[0]);
             } else {
-                // Si hay múltiples resultados, mostrarlos en la interfaz
                 mostrarResultados(resultados);
             }
         });
-        return;  // Detener la ejecución aquí para evitar la búsqueda normal
+        return;
     }
 
+    const transaction = db.transaction(["productos"], "readonly");
+    const objectStore = transaction.objectStore("productos");
     const request = objectStore.get(codigo);
 
     request.onsuccess = event => {
-        const producto = event.target.result;
-        if (producto) {
-            document.getElementById("codigoEditar").value = producto.codigo;
-            document.getElementById("codigoEditar").setAttribute("data-codigo-original", producto.codigo); // Guardar el código original
-            document.getElementById("nombreEditar").value = producto.nombre;
-            document.getElementById("categoriaEditar").value = producto.categoria;
-            document.getElementById("marcaEditar").value = producto.marca;
-            document.getElementById("unidadEditar").value = producto.unidad;
-            document.getElementById("formularioEdicion").style.display = "block";
+        if (event.target.result) {
+            llenarFormularioEdicion(event.target.result);
         } else {
             mostrarMensaje("Producto no encontrado", "error");
         }
     };
+}
+
+function llenarFormularioEdicion(producto) {
+    document.getElementById("codigoEditar").value = producto.codigo;
+    document.getElementById("nombreEditar").value = producto.nombre;
+    document.getElementById("categoriaEditar").value = producto.categoria;
+    document.getElementById("marcaEditar").value = producto.marca;
+    document.getElementById("unidadEditar").value = producto.unidad;
+    document.getElementById("formularioEdicion").style.display = "block";
 }
 // Funciones para validar código único
 export function validarCodigoUnico(codigo) {
@@ -554,53 +541,31 @@ export function agregarProductoABaseDeDatos(producto) {
     };
 }
 // Función para buscar inventario en nueva base de datos
-export async function buscarProductoInventario() {
+export function buscarProductoInventario() {
     const codigo = document.getElementById("codigo").value;
-    const nombre = document.getElementById("nombreInventario").value;
-    const marca = document.getElementById("marcaInventario").value;
 
     if (codigo.length === 4) {
         buscarPorCodigoParcial(codigo, (resultados) => {
             if (resultados.length === 1) {
-                // Si solo hay un resultado, mostrar directamente el formulario de inventario
                 mostrarFormularioInventario(resultados[0]);
             } else {
-                // Si hay múltiples resultados, mostrarlos en la interfaz
                 mostrarResultadosInventario(resultados);
             }
         });
-        return;  // Detener la ejecución aquí para evitar la búsqueda normal
+        return;
     }
 
-    try {
-        // Primero buscar en la base de datos de productos
-        const productosResultados = await buscarEnProductos(codigo, nombre, marca);
+    const transaction = db.transaction(["productos"], "readonly");
+    const objectStore = transaction.objectStore("productos");
+    const request = objectStore.get(codigo);
 
-        if (productosResultados.length === 0) {
-            // Si no se encuentra el producto, preguntar si desea agregarlo
-            agregarNuevoProductoDesdeInventario(codigo);
-            return;
-        }
-
-        // Si encontramos productos, buscar en inventario
-        const inventarioResultados = await buscarEnInventario(codigo, nombre, marca);
-
-        if (inventarioResultados.length > 0) {
-            // Si existe en inventario, mostrar modal con opciones
-            mostrarModalProductoExistente(productosResultados[0], inventarioResultados);
+    request.onsuccess = event => {
+        if (event.target.result) {
+            mostrarFormularioInventario(event.target.result);
         } else {
-            // Si no existe en inventario, mostrar resultados normales
-            mostrarResultadosInventario(productosResultados);
+            mostrarMensaje("Producto no encontrado", "error");
         }
-    } catch (error) {
-        console.error("Error en la búsqueda:", error);
-        Swal.fire({
-            title: "Error",
-            text: "Error al buscar el producto",
-            icon: "error",
-            timer: 2000
-        });
-    }
+    };
 }
 // Función para buscar en la base de datos de productos
 function buscarEnProductos(codigo, nombre, marca) {
