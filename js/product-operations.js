@@ -115,22 +115,16 @@ export function buscarPorCodigoParcial(codigoParcial, callback) {
     request.onsuccess = function (event) {
         const productos = event.target.result || [];
 
-        // Convertir a string y filtrar por coincidencia
+        // Convertir códigos a string para evitar problemas con números
         const resultados = productos.filter(producto => {
-            const codigo = producto.codigo.toString(); // Asegurar que siempre sea string
+            const codigo = producto.codigo.toString();
             return codigo.includes(codigoParcial);
         });
 
-        if (resultados.length > 0) {
-            if (callback) {
-                callback(resultados);
-            } else if (document.getElementById("resultados")) {
-                mostrarResultados(resultados);
-            } else {
-                console.warn("No hay contenedor de resultados disponible.");
-            }
+        if (callback) {
+            callback(resultados);
         } else {
-            mostrarMensaje(`No se encontraron productos con código parcial ${codigoParcial}`, "error");
+            mostrarResultados(resultados);
         }
     };
 
