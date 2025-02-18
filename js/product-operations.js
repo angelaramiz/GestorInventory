@@ -3,6 +3,7 @@ import { db, dbInventario } from './db-operations.js';
 import { mostrarMensaje } from './logs.js';
 import { cargarDatosEnTabla } from './db-operations.js';
 import { sanitizarProducto } from './sanitizacion.js';
+import { getToken } from './auth.js';
 
 //  funciones 
 export function mostrarResultados(resultados) {
@@ -429,23 +430,9 @@ export async function guardarInventario() {
         });
 
         // Sincronizar con Supabase
-        const tokenData = localStorage.getItem('supabase.auth.token');
-        if (!tokenData) {
-            mostrarMensaje("La sesión ha expirado. Por favor, inicia sesión nuevamente", "error");
-            return;
-        }
-
-        let token;
-        try {
-            const parsedTokenData = JSON.parse(tokenData);
-            token = parsedTokenData?.currentSession?.access_token;
-        } catch (error) {
-            mostrarMensaje("Error al procesar el token de autenticación", "error");
-            return;
-        }
-
+        const token = getToken();
         if (!token) {
-            mostrarMensaje("La sesión ha expirado. Por favor, inicia sesión nuevamente", "error");
+            window.location.href = './index.html'; // Redirigir al inicio de sesión
             return;
         }
 
@@ -465,12 +452,17 @@ export async function guardarInventario() {
         );
 
         if (!supabaseResponse.ok) {
-            const errorData = await supabaseResponse.json();
-            mostrarMensaje(
-                `Error de sincronización: ${errorData.error || "Contacta al soporte técnico"}`,
-                "advertencia",
-                { timer: 3000 }
-            );
+            if (supabaseResponse.status === 401) {
+                mostrarMensaje("La sesión ha expirado. Por favor, inicia sesión nuevamente", "error");
+                window.location.href = './index.html'; // Redirigir al inicio de sesión
+            } else {
+                const errorData = await supabaseResponse.json();
+                mostrarMensaje(
+                    `Error de sincronización: ${errorData.error || "Contacta al soporte técnico"}`,
+                    "advertencia",
+                    { timer: 3000 }
+                );
+            }
             return;
         }
 

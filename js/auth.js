@@ -18,7 +18,7 @@ document.addEventListener('DOMContentLoaded', () => {
             
             if (data.success) {
                 // Guardar token JWT
-                localStorage.setItem('supabase.auth.token', data.user.access_token); // <-- Línea clave
+                localStorage.setItem('supabase.auth.token', JSON.stringify(data.user)); // Guardar el objeto completo
                 localStorage.setItem('usuario_id', data.user.id); // Guarda el usuario_id
                 
                 mostrarMensaje('Inicio de sesión exitoso', 'exito');
@@ -29,55 +29,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 });
-
-export async function verificarToken() {
-    const tokenData = localStorage.getItem('supabase.auth.token');
-    if (!tokenData) {
-        mostrarMensaje("No se encontró el token de autenticación", "error");
-        return false;
-    }
-
-    let token;
-    try {
-        const parsedTokenData = JSON.parse(tokenData);
-        token = parsedTokenData?.currentSession?.access_token;
-    } catch (error) {
-        mostrarMensaje("Error al procesar el token de autenticación", "error");
-        return false;
-    }
-
-    if (!token) {
-        mostrarMensaje("Token de autenticación no válido", "error");
-        return false;
-    }
-
-    try {
-        const response = await fetch("https://gestorinventory-backend-production.up.railway.app/productos/verificar-token", {
-            method: "GET",
-            headers: {
-                "Content-Type": "application/json",
-                "Authorization": `Bearer ${token}`
-            }
-        });
-
-        if (!response.ok) {
-            const errorText = await response.text();
-            throw new Error(`Error ${response.status}: ${errorText}`);
-        }
-
-        const data = await response.json();
-        if (data.success) {
-            mostrarMensaje("Token válido", "exito");
-            return true;
-        } else {
-            mostrarMensaje("Token no válido", "error");
-            return false;
-        }
-    } catch (error) {
-        mostrarMensaje(`Error al verificar el token: ${error.message}`, "error");
-        return false;
-    }
-}
 
 document.addEventListener('DOMContentLoaded', () => {
     const formRegistro = document.getElementById('formRegistro');
@@ -122,3 +73,28 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 });
+
+function isTokenExpired(token) {
+    const payload = JSON.parse(atob(token.split('.')[1]));
+    const expirationTime = payload.exp * 1000; // Convertir a milisegundos
+    return Date.now() > expirationTime;
+}
+
+export function getToken() {
+    const tokenData = localStorage.getItem('supabase.auth.token');
+    if (!tokenData) return null;
+
+    try {
+        const parsedTokenData = JSON.parse(tokenData);
+        const token = parsedTokenData?.access_token || parsedTokenData?.currentSession?.access_token;
+        if (isTokenExpired(token)) {
+            mostrarMensaje("La sesión ha expirado. Por favor, inicia sesión nuevamente", "error");
+            return null;
+        }
+        return token;
+    } catch (error) {
+        console.error("Error al procesar el token de autenticación:", error);
+        mostrarMensaje("Error al procesar el token de autenticación", "error");
+        return null;
+    }
+}
